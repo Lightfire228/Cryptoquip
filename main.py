@@ -1,5 +1,9 @@
 from io       import BytesIO
 from datetime import datetime
+from pathlib  import Path
+
+import shutil
+import zipfile
 
 from PIL import Image, ImageDraw, ImageFont
 from bs4 import BeautifulSoup
@@ -35,8 +39,7 @@ def main(args):
     image = insert_padding(image)
     image = insert_text(image, date_text)
 
-    log_img(image)
-
+    compile_word_doc(image)
 
 def parse_args():
     return None
@@ -159,6 +162,34 @@ def insert_text(image, text):
 
     return image
 
+#endregion
+
+#region word
+
+def compile_word_doc(image):
+
+    out  = Path('./out')
+    doc  = out / 'doc_with_stretch.docx'
+
+    image_file    = out / 'image.png'
+    word_template = Path('./word_exploded')
+
+    files = [f for f in word_template.glob('**/*') if f.is_file()]
+    image.save(str(image_file), 'PNG')
+
+    with zipfile.ZipFile(str(doc), 'w', zipfile.ZIP_DEFLATED, strict_timestamps=False) as zip:
+
+        for f in files:
+            name = Path('/'.join(f.parts[1:]))
+            zip.write(str(f), str(name))
+
+        zip.write(str(image_file), 'word/media/image1.png')
+
+
+
+
+
+
 
 #endregion
 
@@ -178,7 +209,6 @@ def req(url):
 def log_bs4(data):
 
     from collections.abc import Iterable
-    from pathlib         import Path
     
     out = BeautifulSoup('<html><body></body></html>', PARSER)
 
@@ -190,7 +220,6 @@ def log_bs4(data):
     Path('./out/test.html').write_text(out.prettify())
 
 def log_img(image):
-    from pathlib import Path
 
     file = Path('./out/test.png')
 
