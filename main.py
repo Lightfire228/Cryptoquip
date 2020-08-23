@@ -2,7 +2,9 @@ from io       import BytesIO
 from datetime import datetime
 from pathlib  import Path
 
+import os
 import shutil
+import tempfile
 import zipfile
 
 from PIL import Image, ImageDraw, ImageFont
@@ -24,17 +26,13 @@ STRETCH = 200
 
 def main(args):
 
-    day     = 0
-    stretch = True
+    day = 0
 
     base_page   = get_base_page()
     image_cards = filter_images(base_page)
     image_urls  = extract_image_urls(image_cards)
     date_text   = extract_date_text(image_cards, day)
     image       = get_image(image_urls, day)
-
-    if stretch:
-        image = stretch_image(image)
 
     image = insert_padding(image)
     image = insert_text(image, date_text)
@@ -168,27 +166,26 @@ def insert_text(image, text):
 
 def compile_word_doc(image):
 
-    out  = Path('./out')
-    doc  = out / 'doc_with_stretch.docx'
+    tmp = tempfile.gettempdir()
+    doc = tempfile.NamedTemporaryFile(delete=False, suffix='.docx') 
 
-    image_file    = out / 'image.png'
+    image_file    = Path(tmp) / 'image.png'
     word_template = Path('./word_exploded')
 
     files = [f for f in word_template.glob('**/*') if f.is_file()]
-    image.save(str(image_file), 'PNG')
+    image.save(image_file, image.format)
 
-    with zipfile.ZipFile(str(doc), 'w', zipfile.ZIP_DEFLATED, strict_timestamps=False) as zip:
+    with zipfile.ZipFile(doc.name, 'w', zipfile.ZIP_DEFLATED, strict_timestamps=False) as zip:
 
         for f in files:
             name = Path('/'.join(f.parts[1:]))
             zip.write(str(f), str(name))
 
-        zip.write(str(image_file), 'word/media/image1.png')
+        zip.write(image_file, 'word/media/image1.png')
 
 
-
-
-
+    doc.close()
+    os.system(f'start {doc.name}')
 
 
 #endregion
