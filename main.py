@@ -1,23 +1,33 @@
-from io import BytesIO
+from io       import BytesIO
+from datetime import datetime
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from bs4 import BeautifulSoup
 
 import requests
 
-url        = 'https://www.cecildaily.com/diversions/cryptoquip/'
-parser     = 'html.parser'
-user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:79.0) Gecko/20100101 Firefox/79.0'
+URL        = 'https://www.cecildaily.com/diversions/cryptoquip/'
+PARSER     = 'html.parser'
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:79.0) Gecko/20100101 Firefox/79.0'
+
+PAD_PIXELS     = 100
+TOP_BOX_HEIGHT = 60
+
+FONT      = 'arial.ttf'
+FONT_SIZE = 20
 
 def main(args):
+
+    day = 0
+
     base_page   = get_base_page()
     image_cards = filter_images(base_page)
     image_urls  = extract_image_urls(image_cards)
-    image       = get_image(image_urls, 0)
+    date_text   = extract_date_text(image_cards, day)
+    image       = get_image(image_urls, day)
 
-    process_image(image)
-
-    log_img(image)
+    image = insert_padding(image)
+    image = insert_text(image, date_text)
 
 
 def parse_args():
@@ -26,9 +36,9 @@ def parse_args():
 #region get image
 
 def get_base_page():
-    text = req(url).text
+    text = req(URL).text
 
-    root = BeautifulSoup(text, parser)
+    root = BeautifulSoup(text, PARSER)
 
     return root
 
@@ -69,12 +79,70 @@ def get_image(urls, index):
 
     return i
 
+def extract_date_text(cards, index):
+
+    card = cards[index]
+
+    time = card.find('time')
+    iso  = time.attrs['datetime']
+
+    date = datetime.fromisoformat(iso)
+
+    day    = date.strftime('%A')
+    pretty = date.strftime('%x')
+
+
+
+    text = f'{day} - {pretty}'
+
+    return text
+
 #endregion
 
 #region processing
 
-def process_image(image):
-    pass
+def insert_padding(image):
+    width, height = image.size
+
+    top_box           = (0, 0, width, TOP_BOX_HEIGHT)
+    bottom_corner     = (0, TOP_BOX_HEIGHT)
+    bottom_box        = (0, TOP_BOX_HEIGHT, width, height)
+    new_bottom_corner = (0, TOP_BOX_HEIGHT + PAD_PIXELS)
+
+    new_height = height + PAD_PIXELS
+    dim        = (width, new_height)
+    white      = '#FFFFFF'
+
+    target = Image.new(image.mode, dim, white)
+
+    top_region    = image.crop(top_box)
+    bottom_region = image.crop(bottom_box)
+    
+    target.paste(top_region,    top_box)
+    target.paste(bottom_region, new_bottom_corner)
+
+    return target
+
+def insert_text(image, text):
+
+    draw = ImageDraw.Draw(image)
+
+    font = ImageFont.truetype(FONT, FONT_SIZE)
+
+    text_box     = font.getmask(text).getbbox()
+    text_center  = text_box[2]   // 2
+    image_center = image.size[0] // 2
+
+    offset_width  = image_center - text_center
+    offset_height = TOP_BOX_HEIGHT + 10
+    offset_box    = (offset_width, offset_height)
+    
+    draw.text(offset_box, text, font=font, fill='black')
+
+    log_img(image)
+
+    return image
+
 
 #endregion
 
@@ -82,7 +150,7 @@ def process_image(image):
 
 def req(url):
     headers = {
-        'User-Agent': user_agent
+        'User-Agent': USER_AGENT
     }
 
     r = requests.get(url, headers=headers)
@@ -96,7 +164,7 @@ def log_bs4(data):
     from collections.abc import Iterable
     from pathlib         import Path
     
-    out = BeautifulSoup('<html><body></body></html>', parser)
+    out = BeautifulSoup('<html><body></body></html>', PARSER)
 
     if not isinstance(data, Iterable):
         data = [data]
