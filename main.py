@@ -16,9 +16,12 @@ TOP_BOX_HEIGHT = 60
 FONT      = 'arial.ttf'
 FONT_SIZE = 20
 
+STRETCH = 200
+
 def main(args):
 
-    day = 0
+    day     = 0
+    stretch = True
 
     base_page   = get_base_page()
     image_cards = filter_images(base_page)
@@ -26,8 +29,13 @@ def main(args):
     date_text   = extract_date_text(image_cards, day)
     image       = get_image(image_urls, day)
 
+    if stretch:
+        image = stretch_image(image)
+
     image = insert_padding(image)
     image = insert_text(image, date_text)
+
+    log_img(image)
 
 
 def parse_args():
@@ -79,6 +87,17 @@ def get_image(urls, index):
 
     return i
 
+def stretch_image(image):
+
+    width, height = image.size
+
+    new_width = width + STRETCH
+    new_size  = (new_width, height)
+
+    resize = image.resize(new_size)
+
+    return resize
+
 def extract_date_text(cards, index):
 
     card = cards[index]
@@ -90,7 +109,6 @@ def extract_date_text(cards, index):
 
     day    = date.strftime('%A')
     pretty = date.strftime('%x')
-
 
 
     text = f'{day} - {pretty}'
@@ -138,8 +156,6 @@ def insert_text(image, text):
     offset_box    = (offset_width, offset_height)
     
     draw.text(offset_box, text, font=font, fill='black')
-
-    log_img(image)
 
     return image
 
