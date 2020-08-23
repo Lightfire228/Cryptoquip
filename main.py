@@ -2,6 +2,7 @@ from io       import BytesIO
 from datetime import datetime
 from pathlib  import Path
 
+import argparse
 import os
 import shutil
 import tempfile
@@ -26,13 +27,11 @@ STRETCH = 200
 
 def main(args):
 
-    day = 0
-
     base_page   = get_base_page()
     image_cards = filter_images(base_page)
     image_urls  = extract_image_urls(image_cards)
-    date_text   = extract_date_text(image_cards, day)
-    image       = get_image(image_urls, day)
+    date_text   = extract_date_text(image_cards, args)
+    image       = get_image(image_urls, args)
 
     image = insert_padding(image)
     image = insert_text(image, date_text)
@@ -40,7 +39,10 @@ def main(args):
     compile_word_doc(image)
 
 def parse_args():
-    return None
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('-d', '--days-ago', type=int, default=0)
+
+    return parser.parse_args()
 
 #region get image
 
@@ -79,8 +81,8 @@ def extract_image_urls(cards):
 
     return urls
 
-def get_image(urls, index):
-    url = urls[index]
+def get_image(urls, args):
+    url = urls[args.days_ago]
 
     r = req(url)
 
@@ -99,9 +101,9 @@ def stretch_image(image):
 
     return resize
 
-def extract_date_text(cards, index):
+def extract_date_text(cards, args):
 
-    card = cards[index]
+    card = cards[args.days_ago]
 
     time = card.find('time')
     iso  = time.attrs['datetime']
