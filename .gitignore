@@ -1,6 +1,13 @@
 
+**/__pycache__
+build/
+dist/
+
+main.spec
+
 .venv
 .vscode/
+
 
 out/
 /*.html
