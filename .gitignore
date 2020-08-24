@@ -3,8 +3,6 @@
 build/
 dist/
 
-main.spec
-
 .venv
 .vscode/
 
