@@ -1,4 +1,5 @@
 bs4
 pillow
 pyinstaller
+PyPDF2
 requests

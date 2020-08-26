@@ -5,6 +5,9 @@ from bs4 import BeautifulSoup
 
 import requests
 
+from . import utils
+
+BASE_URL   = 'https://www.cecildaily.com'
 URL        = 'https://www.cecildaily.com/diversions/cryptoquip/'
 PARSER     = 'html.parser'
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:79.0) Gecko/20100101 Firefox/79.0'
@@ -12,7 +15,7 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:79.0) Gecko/20100101 
 SUNDAY = 6
 
 def get_image_contexts():
-    html           = _download_page()
+    html           = _download_page(URL)
     image_cards    = _extract_image_cards(html)
     image_contexts = _to_image_contexts(image_cards)
 
@@ -26,8 +29,20 @@ def download_image_binary(image_context):
 
     return r.content
 
-def _download_page():
-    html = _req(URL).text
+def download_pdf_binary(image_context):
+
+    html    = _download_page(image_context.url)
+    pdf_url = _extract_pdf_url(html, image_context.uuid)
+
+    r = _req(pdf_url)
+
+    return r.content
+
+
+#region parsing main site
+
+def _download_page(url):
+    html = _req(url).text
 
     return html
 
@@ -50,7 +65,7 @@ def _extract_image_cards(html):
 def _to_image_contexts(image_cards):
     
     def to_obj(i, card):
-        url  = _extract_image_url(card)
+        url  = _extract_crypto_url(card)
         date = _extract_date(card)
 
         return ImageContext(i, url, date)
@@ -75,6 +90,15 @@ def _extract_image_url(card):
 
     return url
 
+def _extract_crypto_url(card):
+
+    card_body = card     .find('div', class_='card-body')
+    a_tag     = card_body.find('a')
+
+    href = a_tag.attrs['href']
+
+    return href
+
 def _extract_date(card):
 
     time = card.find('time')
@@ -83,6 +107,21 @@ def _extract_date(card):
     date = datetime.fromisoformat(iso)
 
     return date
+
+#endregion
+
+#region parsing crypto specific page
+
+def _extract_pdf_url(crypto_html, uuid):
+    root = BeautifulSoup(crypto_html, PARSER)
+
+    div   = root.find('div', id=f'file-{uuid}')
+    a_tag = div.find('a')
+
+    href  = a_tag.attrs['href']
+    return href
+
+#endregion
 
 def _req(url):
     headers = {
@@ -99,12 +138,20 @@ class ImageContext():
 
     def __init__(self, ordinal, url, date):
         self.ordinal = ordinal
-        self.url     = url
+        self.url     = BASE_URL + url
         self.date    = date
     
     @property
     def is_sunday(self):
         return self.date.weekday() == SUNDAY
+
+    @property
+    def uuid(self):
+        uuid = self.url.split('/')[-1]
+        return (uuid
+            .replace('file_', '')
+            .replace('.html', '')
+        )
 
     def format_date(self):
         day  = self.date.strftime('%A')
