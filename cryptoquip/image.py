@@ -1,11 +1,12 @@
 from io       import BytesIO
-from pathlib  import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-STRETCH        = 250
+STRETCH = 250
+
 PAD_PIXELS     = 100
-TOP_BOX_HEIGHT = 60
+TOP_BOX_HEIGHT =  60
+FOOTER_HEIGHT  = 360
 
 FONT      = 'arial.ttf'
 FONT_SIZE = 20
@@ -19,10 +20,9 @@ def process_image(image_binary, image_context):
     if image_context.is_sunday:
         image = _stretch_image(image)
     
+    image = _crop_footer(image)
     image = _insert_padding(image)
     image = _insert_text(image, image_context.format_date())
-
-    log_img(image)
 
     return _to_bytes(image)
 
@@ -37,25 +37,32 @@ def _stretch_image(image):
 
     return resize
 
+def _crop_footer(image):
+    width, height = image.size
+
+    top_box = (0, 0, width, FOOTER_HEIGHT)
+
+    return image.crop(top_box)
+
 def _insert_padding(image):
     width, height = image.size
 
-    top_box           = (0, 0, width, TOP_BOX_HEIGHT)
-    bottom_corner     = (0, TOP_BOX_HEIGHT)
-    bottom_box        = (0, TOP_BOX_HEIGHT, width, height)
-    new_bottom_corner = (0, TOP_BOX_HEIGHT + PAD_PIXELS)
+    top_box              = (0, 0, width, TOP_BOX_HEIGHT)
+    bottom_corner        = (0, TOP_BOX_HEIGHT)
+    bottom_box           = (0, TOP_BOX_HEIGHT, width, height)
+    target_bottom_corner = (0, TOP_BOX_HEIGHT + PAD_PIXELS)
 
-    new_height = height + PAD_PIXELS
-    dim        = (width, new_height)
-    white      = '#FFFFFF'
+    target_height = height + PAD_PIXELS
+    target_dim    = (width, target_height)
+    white         = '#FFFFFF'
 
-    target = Image.new(image.mode, dim, white)
+    target = Image.new(image.mode, target_dim, white)
 
     top_region    = image.crop(top_box)
     bottom_region = image.crop(bottom_box)
     
     target.paste(top_region,    top_box)
-    target.paste(bottom_region, new_bottom_corner)
+    target.paste(bottom_region, target_bottom_corner)
 
     return target
 
@@ -83,9 +90,3 @@ def _to_bytes(image):
     image.save(byte_handler, EXPORT_FORMAT)
 
     return byte_handler
-
-def log_img(image):
-
-    file = Path('./out/test.png')
-
-    image.save(str(file), 'PNG')
