@@ -1,11 +1,18 @@
 from datetime import datetime, timedelta
 from types    import SimpleNamespace
 
+import argparse
 import sys
 
 COLUMNS = 2
 
 def choose_image(image_contexts):
+
+    args = _parse_args()
+
+    if args.skip_menu:
+        return _skip_menu(image_contexts, args)
+
     menu_options = _to_menu_options(image_contexts)
     bi_menu      = _bifurcate(menu_options)
 
@@ -13,6 +20,17 @@ def choose_image(image_contexts):
     selected_image = _select_image(usr_input, image_contexts)
 
     return selected_image
+
+def _parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--skip-menu', action='store_true')
+    parser.add_argument('-d', '--day', type=int, default=0)
+
+    return parser.parse_args()
+
+def _skip_menu(image_contexts, args):
+    print('Skipping menu')
+    return image_contexts[args.day]
 
 def _usr_in():
     return input(f'> ')
@@ -76,6 +94,9 @@ def _to_menu_str(bi_menu):
     return menu_str
 
 def _select_image(usr_input, image_contexts):
+
+    if len(usr_input) == 0:
+        return image_contexts[0]
 
     max_ = len(image_contexts) -1
 

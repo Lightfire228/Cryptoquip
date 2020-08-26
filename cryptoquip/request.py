@@ -1,17 +1,6 @@
-from io       import BytesIO
 from datetime import datetime, timedelta
-from pathlib  import Path
-from types    import SimpleNamespace
-from math     import ceil
+from pathlib import Path
 
-import argparse
-import os
-import shutil
-import sys
-import tempfile
-import zipfile
-
-from PIL import Image, ImageDraw, ImageFont
 from bs4 import BeautifulSoup
 
 import requests
@@ -105,19 +94,6 @@ def _req(url):
     r.raise_for_status()
 
     return r
-
-def _log_bs4(data):
-
-    from collections.abc import Iterable
-    
-    out = BeautifulSoup('<html><body></body></html>', PARSER)
-
-    if not isinstance(data, Iterable):
-        data = [data]
-
-    out.html.body.extend(data)
-
-    Path('./out/test.html').write_text(out.prettify())
 
 class ImageContext():
 
