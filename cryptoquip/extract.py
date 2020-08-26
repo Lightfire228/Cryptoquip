@@ -86,6 +86,6 @@ def _black_magic(bytes_handler):
                     img_name    = obj[1:] + '.tiff'
 
                     pdf_file.close()
-                    return BytesIO(tiff_header + data)
+                    return tiff_header + data
 
     pdf_file.close()
