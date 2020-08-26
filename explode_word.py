@@ -30,5 +30,7 @@ def _extract(source, dest):
 def _delete_image(dest):
     image = dest / 'word/media/image1.png'
 
+    image.unlink()
+
 if __name__ == "__main__":
     export()
