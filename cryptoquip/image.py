@@ -1,17 +1,22 @@
-from io       import BytesIO
+from io import BytesIO
 
 from PIL import Image, ImageDraw, ImageFont
 
-STRETCH = 250
+STRETCH = 400
 
-PAD_PIXELS     = 100
-TOP_BOX_HEIGHT =  60
-FOOTER_HEIGHT  = 360
+PAD_PIXELS     = 75
+TOP_BOX_HEIGHT = 75
+BORDER_PIXELS  = 100
+
+DATE_BOX = (0, 0, 150, 60)
+
+WHITE = '#FFFFFF'
 
 FONT      = 'arial.ttf'
-FONT_SIZE = 20
+FONT_SIZE = 40
 
 EXPORT_FORMAT = 'PNG'
+
 
 def process_image(image_binary, image_context):
     
@@ -20,11 +25,12 @@ def process_image(image_binary, image_context):
     if image_context.is_sunday:
         image = _stretch_image(image)
     
-    image = _crop_footer(image)
-    image = _insert_padding(image)
+    image = _hide_date(image)
+    image = _insert_header_padding(image)
     image = _insert_text(image, image_context.format_date())
+    # image = _add_border(image)
 
-    return _to_bytes(image)
+    return image
 
 def _stretch_image(image):
 
@@ -37,14 +43,15 @@ def _stretch_image(image):
 
     return resize
 
-def _crop_footer(image):
-    width, height = image.size
+def _hide_date(image):
 
-    top_box = (0, 0, width, FOOTER_HEIGHT)
+    draw = ImageDraw.Draw(image)
 
-    return image.crop(top_box)
+    draw.rectangle(DATE_BOX, fill=WHITE)
 
-def _insert_padding(image):
+    return image
+
+def _insert_header_padding(image):
     width, height = image.size
 
     top_box              = (0, 0, width, TOP_BOX_HEIGHT)
@@ -54,9 +61,8 @@ def _insert_padding(image):
 
     target_height = height + PAD_PIXELS
     target_dim    = (width, target_height)
-    white         = '#FFFFFF'
 
-    target = Image.new(image.mode, target_dim, white)
+    target = Image.new(image.mode, target_dim, WHITE)
 
     top_region    = image.crop(top_box)
     bottom_region = image.crop(bottom_box)
@@ -84,9 +90,17 @@ def _insert_text(image, text):
 
     return image
 
-def _to_bytes(image):
-    byte_handler = BytesIO()
+# don't think this is needed, since image is on paper
+def _add_border(image):
 
-    image.save(byte_handler, EXPORT_FORMAT)
+    width, height = image.size
+    border        = BORDER_PIXELS * 2
 
-    return byte_handler
+    dim = (width + border, height + border)
+
+    target = Image.new(image.mode, dim, WHITE)
+
+    region = image.crop((0, 0, width, height))
+    target.paste(region, (BORDER_PIXELS, BORDER_PIXELS))
+
+    return target
