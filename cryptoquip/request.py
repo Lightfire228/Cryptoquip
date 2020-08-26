@@ -144,6 +144,10 @@ class ImageContext():
     @property
     def is_sunday(self):
         return self.date.weekday() == SUNDAY
+    
+    @property
+    def day_str(self):
+        return self.date.strftime('%A')
 
     @property
     def uuid(self):
