@@ -2,11 +2,12 @@ from io import BytesIO
 
 from PIL import Image, ImageDraw, ImageFont
 
-STRETCH = 400
+STRETCH = 1000
 
 PAD_PIXELS     = 75
 TOP_BOX_HEIGHT = 75
 BORDER_PIXELS  = 100
+FOOTER_HEIGHT  = 862
 
 DATE_BOX = (0, 0, 150, 60)
 
@@ -24,11 +25,11 @@ def process_image(image_binary, image_context):
 
     if image_context.is_sunday:
         image = _stretch_image(image)
+        image = _crop_footer(image)
     
     image = _hide_date(image)
     image = _insert_header_padding(image)
     image = _insert_text(image, image_context.format_date())
-    # image = _add_border(image)
 
     return image
 
@@ -42,6 +43,13 @@ def _stretch_image(image):
     resize = image.resize(new_size)
 
     return resize
+
+def _crop_footer(image):
+    width, height = image.size
+
+    top_box = (0, 0, width, FOOTER_HEIGHT)
+
+    return image.crop(top_box)
 
 def _hide_date(image):
 
