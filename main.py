@@ -1,7 +1,16 @@
 from cryptoquip import app
 
+import sys
+import traceback
+
 def main():
-    app.run()
+    try: 
+        app.run()
+    except:
+        print('Error in Cryptoquip downloader', file=sys.stderr)
+        traceback.print_exc()
+        input('\n(Press ENTER to exit)\n> ')
+
 
 if __name__ == "__main__":
     main()
