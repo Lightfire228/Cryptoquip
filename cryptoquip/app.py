@@ -17,5 +17,3 @@ def run():
     word_file    = export .compile_word_doc(image_,       selected_context)
 
     export.launch_word(word_file)
-
-    # export

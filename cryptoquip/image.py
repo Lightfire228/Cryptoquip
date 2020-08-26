@@ -33,6 +33,7 @@ def process_image(image_binary, image_context):
 
     return image
 
+# this probably doesn't do anything, since word resizes the image anyway
 def _stretch_image(image):
 
     width, height = image.size
