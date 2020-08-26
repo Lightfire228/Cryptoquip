@@ -1,82 +1,153 @@
 from datetime import datetime, timedelta
 from types    import SimpleNamespace
 
-import argparse
 import sys
 
-def parse_args():
+COLUMNS = 2
 
-    if len(sys.argv) == 1:
-        return interactive_menu()
+def choose_image(image_contexts):
+    menu_options = _to_menu_options(image_contexts)
+    bi_menu      = _bifurcate(menu_options)
 
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('-d', '--days-ago', type=int, default=0)
+    usr_input      = _display_menu(bi_menu)
+    selected_image = _select_image(usr_input, image_contexts)
 
-    return parser.parse_args()
+    return selected_image
 
-def interactive_menu():
-    args = SimpleNamespace()
-
-    options = 48
-
-    def right_adj(i, n):
-        s = f'{" " * n}{str(i)}'
-        return s[-n:]
-
-    def left_adj(i, n):
-        s = f'{str(i)}{" " * n}'
-        return s[:n]
-        
-
-    dates = [
-        (i, datetime.today() - timedelta(days=i))
-        for i in range(options)
-    ]
-
-    date_strings =[
-        (i, f'{left_adj(d.strftime("%A"), 9)} - {d.strftime("%x")}')
-        for i, d in dates 
-    ]
-
-    menu = [
-        f'{right_adj(i, 2)} - {ds}'
-        for i, ds in date_strings
-    ]
-    
-    center = options // 2
-    bimenu = ''.join([
-        f'\n  {menu[i]} | {menu[i + center]}'
-        for i in range(center)
-    ])
-
-    days_ago = usr_in('Which Crytoquip to download? (press Enter to download the most recent)' + bimenu)
-
-    if len(days_ago) == 0:
-        args.days_ago = 0
-    else:
-        msg = 'Must be a valid number between 0 and 47'
-
-        if not days_ago.isdigit():
-            bail(msg)
-        
-        days_ago = int(days_ago)
-
-        if days_ago > 48 or days_ago < 0:
-            bail(msg)
-        
-        args.days_ago = days_ago
-
-    return args
+def _usr_in():
+    return input(f'> ')
 
 
-def usr_in(msg):
-    return input(f'{msg}\n> ')
-
-
-
-def bail(msg):
+def _bail(msg):
 
     print('Error:', msg)
     input('(Press Enter to exit)')
     exit(1)
 
+def _to_menu_options(image_contexts):
+    return [MenuOption(ic) for ic in image_contexts]
+
+def _bifurcate(menu_options):
+
+    contexts = [*menu_options, BlankMenuOption(None)]
+
+    center = len(contexts) // COLUMNS
+
+    return [
+        (contexts[i], contexts[center + i])
+        for i in range(center)
+    ]
+
+def _display_menu(bi_menu):
+
+    print('Which Crytoquip to download? (press Enter to download the most recent)')
+    print(_to_menu_str(bi_menu))
+
+    return _usr_in()
+
+
+def _to_menu_str(bi_menu):
+
+    # for each column of the menu, determine the max size of the 3 sub columns
+    sub_col_sizes = [
+        (
+            max([len(row[col].ord_str)  for row in bi_menu]),
+            max([len(row[col].day_str)  for row in bi_menu]),
+            max([len(row[col].date_str) for row in bi_menu]),
+        )
+        for col in range(COLUMNS)
+    ]
+
+    # for each column of each row, format the column based on the max size *per* column
+    col_strs = [
+        [
+            opt.format(sub_col_sizes[col])
+            for col, opt in enumerate(row)
+        ]
+        for row in bi_menu
+    ]
+
+    # join each column together, then each row together
+    menu_str = '  ' + '\n  '.join([
+        ' | '.join(row)
+        for row in col_strs
+    ])
+
+    return menu_str
+
+def _select_image(usr_input, image_contexts):
+
+    max_ = len(image_contexts) -1
+
+    try: 
+        usr_input = int(usr_input)
+        if 0 > usr_input < max_:
+            raise Exception()
+    
+        return image_contexts[usr_input]
+    except:
+        _bail(f'Input must be a number between 0 and {max_}')
+
+
+class MenuOption():
+    
+    def __init__(self, image_context):
+        self.context = image_context
+    
+    @property
+    def ordinal(self):
+        return self.context.ordinal
+
+    @property
+    def ord_str(self):
+        return str(self.ordinal)
+    
+    @property
+    def day_str(self):
+        return self.context.date.strftime('%A')
+    
+    @property
+    def date_str(self):
+        return self.context.date.strftime('%x')
+    
+    def format(self, col_sizes):
+
+        (ord_col, day_col, date_col) = col_sizes
+
+        ord  = self._align(self.ord_str,  ord_col,  'right')
+        day  = self._align(self.day_str,  day_col,  'left')
+        date = self._align(self.date_str, date_col, 'left')
+
+        return f'{ord} - {day} - {date}'
+
+    def _align(self, text, padding, side):
+
+        # right adjust adds padding to the left of the word
+        left_padding  = padding if side == 'right' else 0
+        right_padding = padding if side == 'left'  else None
+
+        left_space  = ' ' * left_padding
+        right_space = ' ' * (right_padding or 0)
+
+        s = left_space + text + right_space
+        return s[-left_padding:right_padding]
+
+class BlankMenuOption(MenuOption):
+
+    def __init__(self, image_context):
+        super().__init__(image_context)
+    
+    @property
+    def ordinal(self):
+        return ''
+    
+    @property
+    def day_str(self):
+        return ''
+    
+    @property
+    def date_str(self):
+        return ''
+
+    def format(self, col_sizes):
+        return ''

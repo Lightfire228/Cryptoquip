@@ -17,24 +17,34 @@ from bs4 import BeautifulSoup
 import requests
 
 URL        = 'https://www.cecildaily.com/diversions/cryptoquip/'
-PARSER     = 'parser.html'
+PARSER     = 'html.parser'
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:79.0) Gecko/20100101 Firefox/79.0'
 
-DAY_STR_LEN = max([ 
-    len(datetime.weekday(i))
-    for i in range(7)
-])
+def get_image_contexts():
+    html           = _download_page()
+    image_cards    = _extract_image_cards(html)
+    image_contexts = _to_image_contexts(image_cards)
 
-def get_base_page():
-    text = req(URL).text
+    return image_contexts
 
-    root = BeautifulSoup(text, PARSER)
+def download_image_binary(image_context):
 
-    return root
+    url = image_context.url
 
-def filter_images(page_root):
+    r = _req(url)
 
-    content = page_root.find('section', id='main-page-container')
+    return r.content
+
+def _download_page():
+    html = _req(URL).text
+
+    return html
+
+def _extract_image_cards(html):
+
+    root = BeautifulSoup(html, PARSER)
+
+    content = root.find('section', id='main-page-container')
 
     card_grids = content.find_all('div', class_='card-grid')
 
@@ -46,45 +56,44 @@ def filter_images(page_root):
 
     return cards
 
-def extract_image_urls(cards):
+def _to_image_contexts(image_cards):
+    
+    def to_obj(i, card):
+        url  = _extract_image_url(card)
+        date = _extract_date(card)
 
-    img_tags  = [c.find('img') for c in cards]
-    src_attrs = [i.attrs['data-srcset'] for i in img_tags]
+        return ImageContext(i, url, date)
+
+    return [
+        to_obj(i, card)
+        for i, card in enumerate(image_cards)
+    ]
+
+
+def _extract_image_url(card):
+
+    img_tag  = card.find('img')
+    src_attr = img_tag.attrs['data-srcset']
 
     ##
     # the data that comes back is of the form:
     # https://url/file.jpg?resize=200%2C186 200w,https://url/file.jpg?resize=300%2C279 300w, ...
     # so, while this is horrendous, splitting on '?' is extremely effective
 
-    urls = [s.split('?')[0] for s in src_attrs]
+    url = src_attr.split('?')[0]
 
-    return urls
+    return url
 
-def get_image(urls, args):
-    url = urls[args.days_ago]
-
-    r = req(url)
-
-    return r.content
-
-def extract_date_text(cards, args):
-
-    card = cards[args.days_ago]
+def _extract_date(card):
 
     time = card.find('time')
     iso  = time.attrs['datetime']
 
     date = datetime.fromisoformat(iso)
 
-    day    = date.strftime('%A')
-    pretty = date.strftime('%x')
+    return date
 
-
-    text = f'{day} - {pretty}'
-
-    return text
-
-def req(url):
+def _req(url):
     headers = {
         'User-Agent': USER_AGENT
     }
@@ -95,7 +104,7 @@ def req(url):
 
     return r
 
-def log_bs4(data):
+def _log_bs4(data):
 
     from collections.abc import Iterable
     
@@ -108,9 +117,10 @@ def log_bs4(data):
 
     Path('./out/test.html').write_text(out.prettify())
 
-def log_img(image):
+class ImageContext():
 
-    file = Path('./out/test.png')
-
-    image.save(str(file), 'PNG')
+    def __init__(self, ordinal, url, date):
+        self.ordinal = ordinal
+        self.url     = url
+        self.date    = date
 
