@@ -3,24 +3,30 @@ from pathlib  import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
+STRETCH        = 250
 PAD_PIXELS     = 100
 TOP_BOX_HEIGHT = 60
 
 FONT      = 'arial.ttf'
 FONT_SIZE = 20
 
-STRETCH = 200
+EXPORT_FORMAT = 'PNG'
 
-def get_image(urls, args):
-    url = urls[args.days_ago]
+def process_image(image_binary, image_context):
+    
+    image = Image.open(BytesIO(image_binary))
 
-    r = req(url)
+    if image_context.is_sunday:
+        image = _stretch_image(image)
+    
+    image = _insert_padding(image)
+    image = _insert_text(image, image_context.format_date())
 
-    i = Image.open(BytesIO(r.content))
+    log_img(image)
 
-    return i
+    return _to_bytes(image)
 
-def stretch_image(image):
+def _stretch_image(image):
 
     width, height = image.size
 
@@ -31,7 +37,7 @@ def stretch_image(image):
 
     return resize
 
-def insert_padding(image):
+def _insert_padding(image):
     width, height = image.size
 
     top_box           = (0, 0, width, TOP_BOX_HEIGHT)
@@ -53,7 +59,7 @@ def insert_padding(image):
 
     return target
 
-def insert_text(image, text):
+def _insert_text(image, text):
 
     draw = ImageDraw.Draw(image)
 
@@ -70,6 +76,13 @@ def insert_text(image, text):
     draw.text(offset_box, text, font=font, fill='black')
 
     return image
+
+def _to_bytes(image):
+    byte_handler = BytesIO()
+
+    image.save(byte_handler, EXPORT_FORMAT)
+
+    return byte_handler
 
 def log_img(image):
 
