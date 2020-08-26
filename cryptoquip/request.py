@@ -20,6 +20,8 @@ URL        = 'https://www.cecildaily.com/diversions/cryptoquip/'
 PARSER     = 'html.parser'
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:79.0) Gecko/20100101 Firefox/79.0'
 
+SUNDAY = 6
+
 def get_image_contexts():
     html           = _download_page()
     image_cards    = _extract_image_cards(html)
@@ -123,4 +125,13 @@ class ImageContext():
         self.ordinal = ordinal
         self.url     = url
         self.date    = date
+    
+    @property
+    def is_sunday(self):
+        return self.date.weekday() == SUNDAY
 
+    def format_date(self):
+        day  = self.date.strftime('%A')
+        date = self.date.strftime('%x')
+
+        return f'{day} - {date}'
