@@ -3,9 +3,13 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
+folder = Path('./out')
+
+folder.mkdir(exist_ok=True, parents=True)
+
 def log_bs4(data, filename='test', wrap=False):
 
-    file_ = Path('./out/') / f'{filename}.html' 
+    file_ = folder / f'{filename}.html' 
 
     out = BeautifulSoup('<html><body></body></html>', 'html.parser')
 
@@ -25,6 +29,6 @@ def log_img(image, filename='test'):
 
 def log_pdf(pdf_binary, filename='test'):
 
-    file_ = Path('./out/') / f'{filename}.pdf'
+    file_ = folder / f'{filename}.pdf'
 
     file_.write_bytes(pdf_binary)

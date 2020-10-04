@@ -1,15 +1,28 @@
-from io import BytesIO
+from io          import BytesIO
+from collections import namedtuple
 
 from PIL import Image, ImageDraw, ImageFont
 
-STRETCH = 1000
+from . import utils
 
-PAD_PIXELS     = 75
-TOP_BOX_HEIGHT = 75
-BORDER_PIXELS  = 100
-FOOTER_HEIGHT  = 862
+import random
 
-DATE_BOX = (0, 0, 150, 60)
+Dim = namedtuple('Dim', ['x1', 'y1'])
+Box = namedtuple('Box', ['x1', 'y1', 'x2', 'y2'])
+
+STRETCH = 0
+
+PAD_PIXELS    =   75
+TOP_BOX_Y     =   80
+BORDER_PIXELS =  100
+FOOTER_Y_SUN  = -191
+
+ANS_BOTTOM_Y        = -104
+ANS_HEADER_DIM      = Dim(101, 57)
+ANS_PIXEL_THRESHOLD = 225
+CLUE_PADDING        = 20
+
+DATE_BOX = Box(0, 0, 175, 65)
 
 WHITE = '#FFFFFF'
 
@@ -19,6 +32,7 @@ FONT_SIZE = 40
 EXPORT_FORMAT = 'PNG'
 
 
+
 def process_image(image_binary, image_context):
     
     image = Image.open(BytesIO(image_binary))
@@ -26,14 +40,17 @@ def process_image(image_binary, image_context):
     if image_context.is_sunday:
         image = _stretch_image(image)
         image = _crop_footer(image)
-    
+    else:
+        image = _crop_answer(image)
+
     image = _hide_date(image)
     image = _insert_header_padding(image)
     image = _insert_text(image, image_context.format_date())
 
+    utils.log_img(image, image_context.day_str)
+
     return image
 
-# this probably doesn't do anything, since word resizes the image anyway
 def _stretch_image(image):
 
     width, height = image.size
@@ -48,7 +65,9 @@ def _stretch_image(image):
 def _crop_footer(image):
     width, height = image.size
 
-    top_box = (0, 0, width, FOOTER_HEIGHT)
+    footer_top_y = (FOOTER_Y_SUN + height) % height
+
+    top_box = Box(0, 0, width, footer_top_y)
 
     return image.crop(top_box)
 
@@ -63,13 +82,13 @@ def _hide_date(image):
 def _insert_header_padding(image):
     width, height = image.size
 
-    top_box              = (0, 0, width, TOP_BOX_HEIGHT)
-    bottom_corner        = (0, TOP_BOX_HEIGHT)
-    bottom_box           = (0, TOP_BOX_HEIGHT, width, height)
-    target_bottom_corner = (0, TOP_BOX_HEIGHT + PAD_PIXELS)
+    top_box              = Box(0, 0, width, TOP_BOX_Y)
+    bottom_corner        = Dim(0, TOP_BOX_Y)
+    bottom_box           = Box(0, TOP_BOX_Y, width, height)
+    target_bottom_corner = Dim(0, TOP_BOX_Y + PAD_PIXELS)
 
     target_height = height + PAD_PIXELS
-    target_dim    = (width, target_height)
+    target_dim    = Dim(width, target_height)
 
     target = Image.new(image.mode, target_dim, WHITE)
 
@@ -80,6 +99,93 @@ def _insert_header_padding(image):
     target.paste(bottom_region, target_bottom_corner)
 
     return target
+
+def _crop_answer(image):
+    width, height = image.size
+
+    ans_bottom_y = (ANS_BOTTOM_Y + height) % height
+    ans_bottom_h = height - ans_bottom_y
+
+    ans_top_y = _scan_ans_header(image)
+
+    if ans_top_y == None:
+        print('Unable to crop nswer programmatically')
+        return image
+
+    target_h   = height - (ans_bottom_y - ans_top_y)
+    target_dim = Dim(width, target_h + CLUE_PADDING)
+
+    top_box    = Box(0,             0, width, ans_top_y)
+    bottom_box = Box(0, ans_bottom_y, width, height)
+
+    target_top    = top_box
+    target_bottom = Box(
+        0,     target_top.y2 + CLUE_PADDING,
+        width, target_top.y2 + CLUE_PADDING + ans_bottom_h
+    )
+
+    target = Image.new(image.mode, target_dim, WHITE)
+
+    top_region    = image.crop(top_box)
+    bottom_region = image.crop(bottom_box)
+    
+    target.paste(top_region,    target_top)
+    target.paste(bottom_region, target_bottom)
+
+    return target
+
+
+def _scan_ans_header(image):
+    width, height = image.size
+
+    ans_header_w, ans_header_h = ANS_HEADER_DIM
+
+    ans_scan_h   = ANS_BOTTOM_Y + ans_header_h
+    ans_bottom_h = (ANS_BOTTOM_Y + height) % height
+    ans_top_h    = ans_bottom_h - ans_header_h 
+
+    found_white = False
+    for dy in reversed(range(ans_top_h)):
+        ans_box = _dim_to_box(ANS_HEADER_DIM, (0, dy))
+
+        ans_candidate = image.crop(ans_box)
+
+        is_white = (
+            p > ANS_PIXEL_THRESHOLD
+            for p in _iter_pixels(ans_candidate)
+        )
+
+        # look for first large junk of white on left side of screen
+        if not found_white and all(is_white):
+            found_white = True
+        
+        # look for first line of black pixels after that
+        elif found_white and not all(is_white):
+            # height of answer found
+            return dy +1
+
+    return None
+
+def _iter_pixels(image):
+
+    w, h = image.size
+
+    for dy in range(h):
+        for dx in range(w):
+            yield image.getpixel((dx, dy))
+
+def _dim_to_box(dim, pos):
+    x, y = pos
+    w, h = dim
+
+    return Box(x, y, x + w, y + h)
+
+def _box_to_dim(box):
+
+    x, y, dx, dy = box
+
+    return Dim(dx - x, dy - y)
+
 
 def _insert_text(image, text):
 
@@ -92,10 +198,10 @@ def _insert_text(image, text):
     image_center = image.size[0] // 2
 
     offset_width  = image_center - text_center
-    offset_height = TOP_BOX_HEIGHT + 10
-    offset_box    = (offset_width, offset_height)
+    offset_height = TOP_BOX_Y + 10
+    offset_dim    = Dim(offset_width, offset_height)
     
-    draw.text(offset_box, text, font=font, fill='black')
+    draw.text(offset_dim, text, font=font, fill='black')
 
     return image
 
@@ -105,11 +211,11 @@ def _add_border(image):
     width, height = image.size
     border        = BORDER_PIXELS * 2
 
-    dim = (width + border, height + border)
+    dim = Dim(width + border, height + border)
 
     target = Image.new(image.mode, dim, WHITE)
 
-    region = image.crop((0, 0, width, height))
-    target.paste(region, (BORDER_PIXELS, BORDER_PIXELS))
+    region = image.crop(Box(0, 0, width, height))
+    target.paste(region, Dim(BORDER_PIXELS, BORDER_PIXELS))
 
     return target
