@@ -4,12 +4,10 @@ build/
 dist/
 main.spec
 
-main.spec
-
 .venv
 .vscode/
-
 
 out/
 /*.html
 /*.docx
+word_docs/
