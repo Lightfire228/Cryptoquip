@@ -1,7 +1,10 @@
 #!/bin/bash
 
 
-pyinstaller -y --add-data "./word_exploded;word_exploded" main.py
+pyinstaller -y \
+    --add-data "./word_exploded;word_exploded" \
+    --add-data "./config.json;."               \
+main.py
 
 cd dist
 cp -r main Cryptoquip/
