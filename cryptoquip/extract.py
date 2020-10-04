@@ -51,7 +51,7 @@ def _tiff_header_for_CCITT(width, height, img_size, CCITT_group=4):
 def _black_magic(bytes_handler):
 
     pdf_file = bytes_handler
-    cond_scan_reader = PyPDF2.PdfFileReader(pdf_file)
+    cond_scan_reader = PyPDF2.PdfFileReader(pdf_file, strict=False)
 
     for i in range(0, cond_scan_reader.getNumPages()):
 
