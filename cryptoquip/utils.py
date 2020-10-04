@@ -1,15 +1,20 @@
 
-from pathlib import Path
+from pathlib     import Path
+from collections import namedtuple
 
 from bs4 import BeautifulSoup
 
-folder = Path('./out')
+_folder = Path('./out')
 
-folder.mkdir(exist_ok=True, parents=True)
+_folder.mkdir(exist_ok=True, parents=True)
+
+Dim = namedtuple('Dim', ['x1', 'y1'])
+Box = namedtuple('Box', ['x1', 'y1', 'x2', 'y2'])
+
 
 def log_bs4(data, filename='test', wrap=False):
 
-    file_ = folder / f'{filename}.html' 
+    file_ = _folder / f'{filename}.html' 
 
     out = BeautifulSoup('<html><body></body></html>', 'html.parser')
 
@@ -29,6 +34,6 @@ def log_img(image, filename='test'):
 
 def log_pdf(pdf_binary, filename='test'):
 
-    file_ = folder / f'{filename}.pdf'
+    file_ = _folder / f'{filename}.pdf'
 
     file_.write_bytes(pdf_binary)

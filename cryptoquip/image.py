@@ -1,20 +1,17 @@
-from io          import BytesIO
-from collections import namedtuple
+from io import BytesIO
 
 from PIL import Image, ImageDraw, ImageFont
 
 from . import utils
 
-import random
-
-Dim = namedtuple('Dim', ['x1', 'y1'])
-Box = namedtuple('Box', ['x1', 'y1', 'x2', 'y2'])
+Dim = utils.Dim
+Box = utils.Box
 
 STRETCH = 0
 
 PAD_PIXELS    =   75
 TOP_BOX_Y     =   80
-BORDER_PIXELS =  100
+BORDER_PIXELS =    1
 FOOTER_Y_SUN  = -191
 
 ANS_BOTTOM_Y        = -104
@@ -47,7 +44,7 @@ def process_image(image_binary, image_context):
     image = _insert_header_padding(image)
     image = _insert_text(image, image_context.format_date())
 
-    utils.log_img(image, image_context.day_str)
+    # utils.log_img(image, image_context.day_str)
 
     return image
 
@@ -206,14 +203,14 @@ def _insert_text(image, text):
     return image
 
 # don't think this is needed, since image is on paper
-def _add_border(image):
+def _add_border(image, color=WHITE):
 
     width, height = image.size
     border        = BORDER_PIXELS * 2
 
     dim = Dim(width + border, height + border)
 
-    target = Image.new(image.mode, dim, WHITE)
+    target = Image.new(image.mode, dim, color)
 
     region = image.crop(Box(0, 0, width, height))
     target.paste(region, Dim(BORDER_PIXELS, BORDER_PIXELS))
