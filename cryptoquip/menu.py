@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
 from types    import SimpleNamespace
 
+from .config import config
+
 import argparse
 import sys
 
-COLUMNS = 2
+COLUMNS = config['menu']['columns']
 
 def choose_image(image_contexts):
 
@@ -47,12 +49,14 @@ def _to_menu_options(image_contexts):
 
 def _bifurcate(menu_options):
 
-    contexts = [*menu_options, BlankMenuOption(None)]
+    blanks = [BlankMenuOption(None)] * (len(menu_options) % COLUMNS)
+
+    contexts = [*menu_options, *blanks]
 
     center = len(contexts) // COLUMNS
 
     return [
-        (contexts[i], contexts[center + i])
+        tuple(contexts[ center*col + i] for col in range(COLUMNS))
         for i in range(center)
     ]
 
