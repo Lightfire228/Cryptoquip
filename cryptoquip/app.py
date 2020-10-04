@@ -1,3 +1,4 @@
+import os
 
 from . import export
 from . import export_bitmap
@@ -17,4 +18,4 @@ def run():
     image_       = image        .process_image   (image_binary, selected_context)
     file_        = export_bitmap.export_bitmap   (image_,       selected_context)
 
-    export_bitmap.launch_paint(file_)
+    os.system(f'start {file_.name}')

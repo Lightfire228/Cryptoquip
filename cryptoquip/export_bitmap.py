@@ -1,4 +1,3 @@
-import os
 import tempfile
 
 from io          import BytesIO
@@ -28,10 +27,6 @@ def export_bitmap(image, image_context):
     tmp_file_handle = _export_to_tmp(target)
 
     return tmp_file_handle
-
-def launch_paint(file_):
-    os.system(f'mspaint {file_.name}')
-
 
 def _export_to_tmp(image):
     tmp = tempfile.gettempdir()
