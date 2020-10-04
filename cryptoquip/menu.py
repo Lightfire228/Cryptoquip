@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
 from types    import SimpleNamespace
 
-from .config import config
+from . import config
 
 import argparse
 import sys
 
-COLUMNS = config['menu']['columns']
+COLUMNS = config.read_config('menu', 'columns', default=2)
 
 def choose_image(image_contexts):
 

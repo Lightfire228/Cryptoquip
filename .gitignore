@@ -11,3 +11,5 @@ out/
 /*.html
 /*.docx
 word_docs/
+
+config.json

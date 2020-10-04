@@ -1,2 +1,0 @@
-./word_exploded;word_exploded
-./config.json;config.json
