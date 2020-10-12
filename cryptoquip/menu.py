@@ -16,7 +16,7 @@ def choose_image(image_contexts):
         return _skip_menu(image_contexts, args)
 
     menu_options = _to_menu_options(image_contexts)
-    bi_menu      = _bifurcate(menu_options)
+    bi_menu      = _furcate(menu_options)
 
     usr_input      = _display_menu(bi_menu)
     selected_image = _select_image(usr_input, image_contexts)
@@ -47,7 +47,8 @@ def _bail(msg):
 def _to_menu_options(image_contexts):
     return [MenuOption(ic) for ic in image_contexts]
 
-def _bifurcate(menu_options):
+# yes, that is a word
+def _furcate(menu_options):
 
     blanks = [BlankMenuOption(None)] * (len(menu_options) % COLUMNS)
 
@@ -71,11 +72,19 @@ def _display_menu(bi_menu):
 def _to_menu_str(bi_menu):
 
     # for each column of the menu, determine the max size of the 3 sub columns
+    def size_of(col, prop):
+        return max(
+            [
+                len( getattr(row[col], prop) )
+                for row in bi_menu
+            ]
+        )
+
     sub_col_sizes = [
         (
-            max([len(row[col].ord_str)  for row in bi_menu]),
-            max([len(row[col].day_str)  for row in bi_menu]),
-            max([len(row[col].date_str) for row in bi_menu]),
+            size_of(col, 'ord_str'),
+            size_of(col, 'day_str'),
+            size_of(col, 'date_str'),
         )
         for col in range(COLUMNS)
     ]
