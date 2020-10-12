@@ -6,6 +6,8 @@ import traceback
 def main():
     try: 
         app.run()
+    except KeyboardInterrupt:
+        raise
     except:
         print('Error in Cryptoquip downloader', file=sys.stderr)
         traceback.print_exc()

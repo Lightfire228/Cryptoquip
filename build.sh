@@ -4,11 +4,9 @@
 pyinstaller -y \
     --add-data "./word_exploded;word_exploded" \
     --add-data "./config.default.json;."       \
+    --add-data "./version;."                   \
 main.py
 
-cd dist
-cp -r main Cryptoquip/
+cd dist/main
 
-7z a -r Cryptoquip.zip Cryptoquip/
-
-rm -r Cryptoquip/
+7z a -r ../Cryptoquip.zip .
