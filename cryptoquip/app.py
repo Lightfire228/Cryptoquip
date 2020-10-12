@@ -7,8 +7,6 @@ from . import menu
 from . import image
 from . import request
 
-from . import utils
-
 def run():
     image_contexts   = request.get_image_contexts()
     selected_context = menu   .choose_image(image_contexts)

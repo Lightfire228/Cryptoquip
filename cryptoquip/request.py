@@ -5,8 +5,6 @@ from bs4 import BeautifulSoup
 
 import requests
 
-from . import utils
-
 BASE_URL   = 'https://www.cecildaily.com'
 URL        = 'https://www.cecildaily.com/diversions/cryptoquip/'
 PARSER     = 'html.parser'

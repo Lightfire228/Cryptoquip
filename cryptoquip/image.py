@@ -44,7 +44,7 @@ def process_image(image_binary, image_context):
     image = _insert_header_padding(image)
     image = _insert_text(image, image_context.format_date())
 
-    # utils.log_img(image, image_context.day_str)
+    # utils_dev.log_img(image, image_context.day_str)
 
     return image
 

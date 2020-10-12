@@ -6,8 +6,6 @@ from PIL import Image
 
 import PyPDF2
 
-from . import utils
-
 def extract_image(pdf_binary, image_context):
     
     bytes_handler = BytesIO(pdf_binary)
