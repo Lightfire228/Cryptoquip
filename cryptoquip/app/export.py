@@ -17,7 +17,7 @@ EXPORT_FORMAT = 'PNG'
 
 # inches
 LETTER_DIM_IN = Dim(8.5, 11)
-MARGIN_IN    = 1
+MARGIN_IN     = 1
 HEIGHT_IN     = 3
 WIDTH_SUN_IN  = LETTER_DIM_IN.x1 - MARGIN_IN *2
 
@@ -29,7 +29,6 @@ def export_bitmap(image, image_context):
     return tmp_file_handle
 
 def _export_to_tmp(image):
-    tmp = tempfile.gettempdir()
     png = tempfile.NamedTemporaryFile(delete=False, suffix='.png') 
 
     image.save(png, 'PNG')
@@ -50,8 +49,7 @@ def _convert_to_letter_size(image, image_context):
 
 def _letter_to_pixel_scale_factor(image, is_sunday):
 
-    width, height   = image.size
-    pixels_per_inch = None
+    width, height = image.size
 
     return (
         width  / WIDTH_SUN_IN if is_sunday else
@@ -66,8 +64,8 @@ def _scale_dim(dim, scale):
     )
 
 def _paste_corners(target, image, px_scale_factor):
-    target_w, target_h = target.size
-    image_w,  image_h  = image .size
+    _,       target_h = target.size
+    image_w, image_h  = image .size
 
     margin_px = int(MARGIN_IN * px_scale_factor)
 
