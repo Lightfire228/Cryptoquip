@@ -5,7 +5,7 @@ import requests
 
 from .. import dirs
 
-MAIN_LINK_FILE = dirs.INSTALL_DIR / 'main.lnk'
+MAIN_LINK_FILE = dirs.INSTALL_DIR / 'main.exe'
 
 def update(update_context):
 
