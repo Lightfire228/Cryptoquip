@@ -12,8 +12,9 @@ from packaging import version
 
 import requests
 
-from .. import utils
 from .. import config
+from .. import dirs
+from .. import utils
 
 BASE_URL = 'https://api.github.com/repos/Lightfire228/Cryptoquip/releases'
 HEADERS  = {
@@ -71,10 +72,10 @@ class UpdateContext():
     @property
     def update_dir(self):
         
-        app_dir  = utils.APP_DIR
-        v_latest = self.v_latest
+        install_dir = dirs.INSTALL_DIR
+        v_latest    = self.v_latest
 
-        update_dir = app_dir.parent / f'{app_dir.name}_{v_latest}'
+        update_dir = install_dir / f'{install_dir.name}_{v_latest}'
 
         return update_dir
 

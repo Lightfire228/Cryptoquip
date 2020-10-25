@@ -2,11 +2,13 @@ from pathlib import Path
 
 import json
 
+from . import dirs
+
 _config_data = None
 config       = None
 
 def _load_config():
-    file_ = Path('./config.json')
+    file_ = dirs.INSTALL_DIR / 'config.json'
 
     if not file_.exists():
         _load_default()
@@ -18,8 +20,8 @@ def _load_config():
         return None
 
 def _load_default():
-    src  = Path('./config.default.json')
-    dest = Path('./config.json')
+    src  = dirs.APP_DIR     / 'config.default.json'
+    dest = dirs.INSTALL_DIR / 'config.json'
 
     dest.write_text(src.read_text())
 

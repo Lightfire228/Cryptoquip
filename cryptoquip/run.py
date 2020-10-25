@@ -1,7 +1,6 @@
 import os
 
 from .app import export
-from .app import export
 from .app import extract
 from .app import menu
 from .app import image

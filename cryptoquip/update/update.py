@@ -1,16 +1,11 @@
-from io      import BytesIO
-from pathlib import Path
-
 import shutil
-import subprocess
-import sys
 import zipfile
 
 import requests
 
-from .. import utils
+from .. import dirs
 
-MAIN_LINK_FILE = utils.APP_DIR.parent / 'main.lnk'
+MAIN_LINK_FILE = dirs.INSTALL_DIR / 'main.lnk'
 
 def update(update_context):
 
@@ -21,6 +16,10 @@ def update(update_context):
 
 
 def delete_old_version(old_dir):
+
+    if not dirs.INSTALL_DIR.parents in old_dir.parents:
+        raise Exception(f'Trying to remove old app dir "{old_dir}" which is not a subdir of "{dirs.INSTALL_DIR}"!')
+
     shutil.rmtree(old_dir)
 
 def _extract_zip(update_context, zip_data):
