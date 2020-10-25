@@ -1,5 +1,4 @@
 
-from cryptoquip.utils import get_app_dir
 from pathlib import Path
 
 from . import utils

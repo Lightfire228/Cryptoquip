@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import json
 
 from . import dirs
@@ -35,7 +33,7 @@ def _read_recurse(keys, config_):
     return _read_recurse(rest, config_[key])
 
 
-def read_config(*keys, default=None, relative_to=None):
+def _read_config(*keys, default=None, relative_to=None):
     
     relative_to = relative_to or _config_data
 
@@ -53,7 +51,7 @@ class Config():
         return Config([*self._attrs, key])
 
     def resolve(self, default=None):
-        return read_config(*self._attrs, default=default)
+        return _read_config(*self._attrs, default=default)
 
 _config_data = _load_config()
 config       = Config()
