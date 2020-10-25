@@ -22,19 +22,19 @@ HEADERS  = {
 
 ZIP_FILE_TYPE = 'application/x-zip-compressed'
 
-UPGRADE_CONF = config.config.update
+UPDATE_CONF = config.config.update
 
 def check():
     
-    update_checking = UPGRADE_CONF.update_checking.resolve(True)
-    use_local       = UPGRADE_CONF.use_local      .resolve(False)
+    update_checking = UPDATE_CONF.update_checking.resolve(True)
+    use_local       = UPDATE_CONF.use_local      .resolve(False)
 
     if not update_checking:
         print('Update checking disabled')
         return None
         
     elif use_local:
-        return LocalUpgradeContext()
+        return LocalUpdateContext()
 
     else:
         return _get_latest_version()
@@ -52,9 +52,9 @@ def _get_latest_version():
 
     data = r.json()
 
-    return RemoteUpgradeContext(data)
+    return RemoteUpdateContext(data)
 
-class UpgradeContext():
+class UpdateContext():
 
     def __init__(self):
         self.v_latest  = None
@@ -69,16 +69,16 @@ class UpgradeContext():
         return version.parse(self.v_latest) > version.parse(self.v_current)
     
     @property
-    def upgrade_dir(self):
+    def update_dir(self):
         
         app_dir  = utils.APP_DIR
         v_latest = self.v_latest
 
-        upgrade_dir = app_dir.parent / f'{app_dir.name}_{v_latest}'
+        update_dir = app_dir.parent / f'{app_dir.name}_{v_latest}'
 
-        return upgrade_dir
+        return update_dir
 
-class RemoteUpgradeContext(UpgradeContext):
+class RemoteUpdateContext(UpdateContext):
 
     def __init__(self, data):
         super().__init__()
@@ -118,12 +118,12 @@ class RemoteUpgradeContext(UpgradeContext):
         except:
             raise Exception('Unable to download the zip file.  Contact your local tech support.')
     
-class LocalUpgradeContext(UpgradeContext):
+class LocalUpdateContext(UpdateContext):
 
     def __init__(self):
         super().__init__()
 
-        conf = UPGRADE_CONF.local
+        conf = UPDATE_CONF.local
         
         self.v_latest = conf.version.resolve()
         self.file     = conf.file.resolve()

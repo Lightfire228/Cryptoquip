@@ -7,7 +7,7 @@ from .app import menu
 from .app import image
 from .app import request
 
-from .upgrade import check, upgrade
+from .update import check, update
 
 def run():
 
@@ -24,7 +24,7 @@ def run():
     # os.system(f'start {file_.name}')
 
 def _check_update():
-    upgrade_context = check.check()
-    if upgrade_context and upgrade_context.is_upgradable:
-        #TODO: ask for upgrade
-        upgrade.upgrade(upgrade_context)
+    update_context = check.check()
+    if update_context and update_context.is_upgradable:
+        #TODO: ask for update
+        update.update(update_context)
