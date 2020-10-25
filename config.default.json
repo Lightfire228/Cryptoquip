@@ -1,5 +1,14 @@
 {
     "menu": {
         "columns": 2
+    },
+    "update": {
+        "update_checking": true,
+        "use_local":       false,
+
+        "local": {
+            "version": "",
+            "file":    ""
+        } 
     }
 }

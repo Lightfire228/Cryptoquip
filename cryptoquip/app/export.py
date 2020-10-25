@@ -6,7 +6,7 @@ from collections import namedtuple
 from PIL import Image, ImageDraw, ImageFont
 
 
-from . import utils
+from .. import utils
 
 Dim = utils.Dim
 Box = utils.Box

@@ -2,9 +2,8 @@
 
 
 pyinstaller -y \
-    --add-data "./word_exploded;word_exploded" \
-    --add-data "./config.default.json;."       \
-    --add-data "./version;."                   \
+    --add-data "./config.default.json;." \
+    --add-data "./version;."             \
 main.py
 
 cd dist/main

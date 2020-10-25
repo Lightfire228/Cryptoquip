@@ -2,6 +2,9 @@ from pathlib import Path
 
 import json
 
+_config_data = None
+config       = None
+
 def _load_config():
     file_ = Path('./config.json')
 
@@ -30,13 +33,25 @@ def _read_recurse(keys, config_):
     return _read_recurse(rest, config_[key])
 
 
-def read_config(*keys, default=None):
+def read_config(*keys, default=None, relative_to=None):
     
+    relative_to = relative_to or _config_data
+
     try:
-        return _read_recurse(keys, config)
+        return _read_recurse(keys, relative_to)
     except:
-        print('Config invalid or unable to parse, using default value')
         return default
 
+class Config():
 
-config = _load_config()
+    def __init__(self, attrs=[]):
+        self._attrs = attrs
+
+    def __getattr__(self, key):
+        return Config([*self._attrs, key])
+
+    def resolve(self, default=None):
+        return read_config(*self._attrs, default=default)
+
+_config_data = _load_config()
+config       = Config()

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from types    import SimpleNamespace
 
-from . import config
+from .. import config
 
 import argparse
 import sys

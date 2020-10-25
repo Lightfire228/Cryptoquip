@@ -1,11 +1,11 @@
-from cryptoquip import app
+from cryptoquip import run
 
 import sys
 import traceback
 
 def main():
     try: 
-        app.run()
+        run.run()
     except KeyboardInterrupt:
         raise
     except:
