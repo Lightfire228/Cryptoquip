@@ -32,10 +32,10 @@ def check():
 
     if not update_checking:
         print('Update checking disabled')
-        return None
+        return LocalUpdateContext(False)
         
     elif use_local:
-        return LocalUpdateContext()
+        return LocalUpdateContext(True)
 
     else:
         return _get_latest_version()
@@ -62,7 +62,7 @@ class UpdateContext():
         self.v_current = utils.get_version()
 
     @property
-    def is_upgradable(self):
+    def is_updateable(self):
 
         if self.v_current or self.v_latest is None:
             return False
@@ -121,13 +121,15 @@ class RemoteUpdateContext(UpdateContext):
     
 class LocalUpdateContext(UpdateContext):
 
-    def __init__(self):
+    def __init__(self, is_updateable):
         super().__init__()
 
         conf = UPDATE_CONF.local
         
         self.v_latest = conf.version.resolve()
         self.file     = conf.file.resolve()
+
+        self._is_updateable = is_updateable
 
     def download(self):
         zip_file = Path(self.file)
@@ -138,5 +140,5 @@ class LocalUpdateContext(UpdateContext):
         return zip_data
 
     @property
-    def is_upgradable(self):
-        return True
+    def is_updateable(self):
+        return self._is_updateable

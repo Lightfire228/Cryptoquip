@@ -1,14 +1,15 @@
-from datetime import datetime, timedelta
-from types    import SimpleNamespace
+from cryptoquip.update.check import UpdateContext
+from cryptoquip.update.update import update
+from types import SimpleNamespace
+
+import argparse
 
 from .. import config
 
-import argparse
-import sys
 
-COLUMNS = config.read_config('menu', 'columns', default=2)
+COLUMNS = config.config.menu.columns.resolve(2)
 
-def choose_image(image_contexts):
+def choose_image(image_contexts, update_context):
 
     args = _parse_args()
 
@@ -18,8 +19,8 @@ def choose_image(image_contexts):
     menu_options = _to_menu_options(image_contexts)
     bi_menu      = _furcate(menu_options)
 
-    usr_input      = _display_menu(bi_menu)
-    selected_image = _select_image(usr_input, image_contexts)
+    usr_input      = _display_menu(bi_menu, update_context)
+    selected_image = _select_option(usr_input, image_contexts, update_context)
 
     return selected_image
 
@@ -61,10 +62,13 @@ def _furcate(menu_options):
         for i in range(center)
     ]
 
-def _display_menu(bi_menu):
+def _display_menu(bi_menu, update_context):
 
     print('Which Crytoquip to download? (press Enter to download the most recent)')
     print(_to_menu_str(bi_menu))
+    
+    if update_context.is_updateable:
+        print(_update_menu(update_context))
 
     return _usr_in()
 
@@ -106,6 +110,22 @@ def _to_menu_str(bi_menu):
 
     return menu_str
 
+def _update_menu(update_context):
+    return f'[There is an update available (ver {update_context.v_latest}).  Type "update" or "u" to install the update]'
+
+def _select_option(usr_input, image_contexts, update_context):
+    selection = _select_update(usr_input, update_context)
+
+    print ('not selection', selection)
+
+    if not selection:
+        selection = _select_image(usr_input, image_contexts)
+        
+    return selection
+
+def _select_update(usr_input, update_context):
+    return update_context if usr_input.lower() in ['u', 'update'] else None
+
 def _select_image(usr_input, image_contexts):
 
     if len(usr_input) == 0:
@@ -127,7 +147,7 @@ class MenuOption():
     
     def __init__(self, image_context):
         self.context = image_context
-    
+
     @property
     def ordinal(self):
         return self.context.ordinal

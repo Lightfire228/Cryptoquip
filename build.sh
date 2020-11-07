@@ -9,3 +9,5 @@ main.py
 cd dist/main
 
 7z a -r ../Cryptoquip.zip .
+
+cp ../Cryptoquip.zip /c/Temp/
