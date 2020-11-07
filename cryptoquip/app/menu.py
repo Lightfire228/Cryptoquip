@@ -2,20 +2,17 @@ from cryptoquip.update.check import UpdateContext
 from cryptoquip.update.update import update
 from types import SimpleNamespace
 
-import argparse
-
 from .. import config
 from .. import utils
 
+args = utils.args
 
 COLUMNS = config.config.menu.columns.resolve(2)
 
 def choose_image(image_contexts, update_context):
 
-    args = _parse_args()
-
     if args.skip_menu:
-        return _skip_menu(image_contexts, args)
+        return _skip_menu(image_contexts)
 
     menu_options = _to_menu_options(image_contexts)
     bi_menu      = _furcate(menu_options)
@@ -25,14 +22,7 @@ def choose_image(image_contexts, update_context):
 
     return selected_image
 
-def _parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--skip-menu', action='store_true')
-    parser.add_argument('-d', '--day', type=int, default=0)
-
-    return parser.parse_args()
-
-def _skip_menu(image_contexts, args):
+def _skip_menu(image_contexts):
     utils.log('Skipping menu')
     return image_contexts[args.day]
 
@@ -116,8 +106,6 @@ def _update_menu(update_context):
 
 def _select_option(usr_input, image_contexts, update_context):
     selection = _select_update(usr_input, update_context)
-
-    print ('not selection', selection)
 
     if not selection:
         selection = _select_image(usr_input, image_contexts)

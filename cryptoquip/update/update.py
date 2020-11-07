@@ -1,12 +1,17 @@
+from cryptoquip.dirs import APP_DIR
+import os
 import shutil
+import subprocess
+from typing import Mapping
 import zipfile
-
-import requests
 
 from .. import dirs
 from .. import utils
 
-MAIN_LINK_FILE = dirs.INSTALL_DIR / 'main.exe'
+args = utils.args
+
+MAIN_LINK_FILE   = dirs.INSTALL_DIR / 'main.exe'
+DELETE_FLAG_FILE = '_delete'
 
 def update(update_context):
 
@@ -14,14 +19,45 @@ def update(update_context):
 
     _extract_zip  (update_context, zip_data)
     _set_link_file(update_context)
+    _mark_to_delete()
 
 
-def delete_old_version(old_dir):
+def delete_old_versions():
 
-    if not dirs.INSTALL_DIR.parents in old_dir.parents:
-        raise Exception(f'Trying to remove old app dir "{old_dir}" which is not a subdir of "{dirs.INSTALL_DIR}"!')
+    if not utils.INSTALLED:
+        return
 
-    shutil.rmtree(old_dir)
+    if args.wait_for_pid:
+        utils.log('Waiting for old app to exit..')
+
+        try:
+            os.waitpid(args.wait_for_pid, 0)
+        except ChildProcessError:
+            pass
+
+        utils.log('Done\n')
+
+    old_versions = [
+        f 
+        for f in dirs.INSTALL_DIR.iterdir() 
+        if 
+            f.is_dir()
+            and (f / DELETE_FLAG_FILE).exists() 
+            and not f == dirs.APP_DIR
+    ]
+
+    utils.log('Removing old app versions')
+
+    for old in old_versions:
+        shutil.rmtree(old)
+
+def launch_new_app(update_context):
+
+    pid = os.getpid()
+
+    file = update_context.update_dir / MAIN_LINK_FILE.name
+    
+    os.system(f'start "" "{file}" -w {pid}')
 
 def _extract_zip(update_context, zip_data):
 
@@ -35,8 +71,10 @@ def _extract_zip(update_context, zip_data):
         zip.extractall(update_dir)
 
 def _set_link_file(update_context):
-    utils.log('symlinking', MAIN_LINK_FILE)
-    utils.log('symlinking to', update_context.update_dir / 'main.exe')
-
     MAIN_LINK_FILE.unlink(missing_ok=True)
-    MAIN_LINK_FILE.symlink_to(update_context.update_dir / 'main.exe')
+    MAIN_LINK_FILE.symlink_to(update_context.update_dir / MAIN_LINK_FILE.name)
+
+def _mark_to_delete():
+    delete_file = dirs.APP_DIR / DELETE_FLAG_FILE
+
+    delete_file.touch(exist_ok=True)

@@ -10,13 +10,15 @@ from .update import check, update
 
 def run():
 
+    update.delete_old_versions()
     update_context = check.check()
 
     image_contexts   = request.get_image_contexts()
     selected_context = menu   .choose_image(image_contexts, update_context)
 
     if selected_context is update_context:
-        update.update(update_context)
+        update.update        (update_context)
+        update.launch_new_app(update_context)
     
     else:
         pdf_binary   = request.download_pdf_binary(selected_context)

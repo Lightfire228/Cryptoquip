@@ -1,12 +1,7 @@
-from datetime import datetime, timedelta
 from pathlib  import Path
 from io       import BytesIO
 
-import os
-import shutil
-import subprocess
-import sys
-import zipfile
+import time
 
 from packaging import version
 
@@ -130,6 +125,7 @@ class LocalUpdateContext(UpdateContext):
         self.file     = conf.file.resolve()
 
         self._is_updateable = is_updateable
+        self._time          = time.time()
 
     def download(self):
         zip_file = Path(self.file)
@@ -138,6 +134,12 @@ class LocalUpdateContext(UpdateContext):
         zip_data.write(zip_file.read_bytes())
 
         return zip_data
+    
+    @property
+    def update_dir(self):
+        dir = super().update_dir
+        
+        return dir.parent / f'{dir.name}_{self._time}'
 
     @property
     def is_updateable(self):
