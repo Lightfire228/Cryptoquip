@@ -27,3 +27,6 @@ def get_app_dir():
         return Path(sys._MEIPASS) # pylint: disable=no-member
     else:
         return Path(__file__).parent
+
+def log(*args, **kwargs):
+    print(*args,  **kwargs)

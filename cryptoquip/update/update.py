@@ -4,6 +4,7 @@ import zipfile
 import requests
 
 from .. import dirs
+from .. import utils
 
 MAIN_LINK_FILE = dirs.INSTALL_DIR / 'main.exe'
 
@@ -29,13 +30,13 @@ def _extract_zip(update_context, zip_data):
     update_dir.mkdir(exist_ok=True)
 
 
-    print('Extracting zip')
+    utils.log('Extracting zip')
     with zipfile.ZipFile(zip_data) as zip:
         zip.extractall(update_dir)
 
 def _set_link_file(update_context):
-    print('symlinking', MAIN_LINK_FILE)
-    print('symlinking to', update_context.update_dir / 'main.exe')
+    utils.log('symlinking', MAIN_LINK_FILE)
+    utils.log('symlinking to', update_context.update_dir / 'main.exe')
 
     MAIN_LINK_FILE.unlink(missing_ok=True)
     MAIN_LINK_FILE.symlink_to(update_context.update_dir / 'main.exe')

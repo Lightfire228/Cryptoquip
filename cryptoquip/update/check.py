@@ -31,7 +31,7 @@ def check():
     use_local       = UPDATE_CONF.use_local      .resolve(False)
 
     if not update_checking:
-        print('Update checking disabled')
+        utils.log('Update checking disabled')
         return LocalUpdateContext(False)
         
     elif use_local:
@@ -107,7 +107,7 @@ class RemoteUpdateContext(UpdateContext):
                 'Accept': 'application/octet-stream'
             }
         
-            print('Downloading zip file:', url)
+            utils.log('Downloading zip file:', url)
             r = requests.get(url, headers=headers)
             r.raise_for_status()
 

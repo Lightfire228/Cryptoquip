@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import argparse
 
 from .. import config
+from .. import utils
 
 
 COLUMNS = config.config.menu.columns.resolve(2)
@@ -32,7 +33,7 @@ def _parse_args():
     return parser.parse_args()
 
 def _skip_menu(image_contexts, args):
-    print('Skipping menu')
+    utils.log('Skipping menu')
     return image_contexts[args.day]
 
 def _usr_in():
@@ -41,7 +42,7 @@ def _usr_in():
 
 def _bail(msg):
 
-    print('Error:', msg)
+    utils.log('Error:', msg)
     input('(Press Enter to exit)')
     exit(1)
 
@@ -64,11 +65,11 @@ def _furcate(menu_options):
 
 def _display_menu(bi_menu, update_context):
 
-    print('Which Crytoquip to download? (press Enter to download the most recent)')
-    print(_to_menu_str(bi_menu))
+    utils.log('Which Crytoquip to download? (press Enter to download the most recent)')
+    utils.log(_to_menu_str(bi_menu))
     
     if update_context.is_updateable:
-        print(_update_menu(update_context))
+        utils.log(_update_menu(update_context))
 
     return _usr_in()
 

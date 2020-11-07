@@ -106,7 +106,7 @@ def _crop_answer(image):
     ans_top_y = _scan_ans_header(image)
 
     if ans_top_y == None:
-        print('Unable to crop nswer programmatically')
+        utils.log('Unable to crop answer programmatically')
         return image
 
     target_h   = height - (ans_bottom_y - ans_top_y)
