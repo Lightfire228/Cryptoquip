@@ -46,7 +46,8 @@ def delete_old_versions():
             and not f == dirs.APP_DIR
     ]
 
-    utils.log('Removing old app versions')
+    if len(old_versions):
+        utils.log('Removing old app versions')
 
     for old in old_versions:
         shutil.rmtree(old)

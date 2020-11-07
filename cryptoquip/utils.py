@@ -14,7 +14,7 @@ Box = namedtuple('Box', ['x1', 'y1', 'x2', 'y2'])
 INSTALLED = getattr(sys, 'frozen', False)
 
 def get_version():
-    version_file = Path('./version.txt')
+    version_file = get_app_dir() / 'version'
     try:
         version_text = version_file.read_text().strip()
 

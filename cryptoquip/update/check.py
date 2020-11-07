@@ -44,22 +44,31 @@ def _get_latest_version():
         r = requests.get(url, headers=HEADERS)
         r.raise_for_status()
     except:
-        return None
+        utils.log('Error while checking for updates.  Try again later')
+        return LocalUpdateContext(False)
+
 
     data = r.json()
+    print('data', data)
 
     return RemoteUpdateContext(data)
 
 class UpdateContext():
 
     def __init__(self):
-        self.v_latest  = None
         self.v_current = utils.get_version()
+
+    @property
+    def v_latest(self):
+        raise NotImplementedError()
 
     @property
     def is_updateable(self):
 
-        if self.v_current or self.v_latest is None:
+        print('curr', self.v_current)
+        print('late', self.v_latest)
+
+        if self.v_current is None or self.v_latest is None:
             return False
         
         return version.parse(self.v_latest) > version.parse(self.v_current)
@@ -79,8 +88,12 @@ class RemoteUpdateContext(UpdateContext):
     def __init__(self, data):
         super().__init__()
 
-        self.v_latest = data['tag_name']
-        self.data     = data
+        self.data = data
+
+    @property
+    def v_latest(self):
+        print('sub ver')
+        return self.data['tag_name']
 
     @property
     def asset_url(self):
@@ -119,10 +132,9 @@ class LocalUpdateContext(UpdateContext):
     def __init__(self, is_updateable):
         super().__init__()
 
-        conf = UPDATE_CONF.local
+        self.conf = UPDATE_CONF.local
         
-        self.v_latest = conf.version.resolve()
-        self.file     = conf.file.resolve()
+        self.file = self.conf.file.resolve()
 
         self._is_updateable = is_updateable
         self._time          = time.time()
@@ -135,6 +147,10 @@ class LocalUpdateContext(UpdateContext):
 
         return zip_data
     
+    @property
+    def v_latest(self):
+        return self.conf.version.resolve()
+
     @property
     def update_dir(self):
         dir = super().update_dir
