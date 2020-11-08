@@ -49,7 +49,6 @@ def _get_latest_version():
 
 
     data = r.json()
-    print('data', data)
 
     return RemoteUpdateContext(data)
 
@@ -64,9 +63,6 @@ class UpdateContext():
 
     @property
     def is_updateable(self):
-
-        print('curr', self.v_current)
-        print('late', self.v_latest)
 
         if self.v_current is None or self.v_latest is None:
             return False
@@ -92,7 +88,6 @@ class RemoteUpdateContext(UpdateContext):
 
     @property
     def v_latest(self):
-        print('sub ver')
         return self.data['tag_name']
 
     @property
