@@ -135,30 +135,45 @@ def _crop_answer(image):
 def _scan_ans_header(image):
     width, height = image.size
 
-    ans_header_w, ans_header_h = ANS_HEADER_DIM
+    _, ans_header_h = ANS_HEADER_DIM
 
-    ans_scan_h   = ANS_BOTTOM_Y + ans_header_h
     ans_bottom_h = (ANS_BOTTOM_Y + height) % height
     ans_top_h    = ans_bottom_h - ans_header_h 
 
-    found_white = False
+    search_white_ans  = True
+    search_white_line = False
+    search_black_line = False
     for dy in reversed(range(ans_top_h)):
-        ans_box = _dim_to_box(ANS_HEADER_DIM, (0, dy))
+        ans_box  = _dim_to_box(ANS_HEADER_DIM, (0, dy))
+        line_box = _dim_to_box((width, 1),     (0, dy))
 
         ans_candidate = image.crop(ans_box)
+        line          = image.crop(line_box)
 
-        is_white = (
-            p > ANS_PIXEL_THRESHOLD
-            for p in _iter_pixels(ans_candidate)
-        )
+        def is_white(img):
+            return (
+                p > ANS_PIXEL_THRESHOLD
+                for p in _iter_pixels(img)
+            )
+        
+        is_white_ans  = is_white(ans_candidate)
+        is_white_line = is_white(line)
 
-        # look for first large junk of white on left side of screen
-        if not found_white and all(is_white):
-            found_white = True
+        # look for first large chunk of white on left side of screen
+        if search_white_ans and all(is_white_ans):
+            search_white_ans  = False
+            search_white_line = True
+        
+        # dy is now in the middle of the top answer row
+
+        # look for first line of white pixels after that
+        elif search_white_line and all(is_white_line):
+            search_white_line = False
+            search_black_line = True
         
         # look for first line of black pixels after that
-        elif found_white and not all(is_white):
-            # height of answer found
+        elif search_black_line and not all(is_white_line):
+            # bottom y of the last clue row
             return dy +1
 
     return None
