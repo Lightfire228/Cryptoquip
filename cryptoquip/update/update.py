@@ -24,7 +24,7 @@ def update(update_context):
 
 def delete_old_versions():
 
-    if not utils.INSTALLED:
+    if not dirs.INSTALLED:
         return
 
     if args.wait_for_pid:

@@ -5,16 +5,15 @@ from collections import namedtuple
 from bs4 import BeautifulSoup
 
 import argparse
-import sys
+
+from . import dirs
 
 Dim = namedtuple('Dim', ['x1', 'y1'])
 Box = namedtuple('Box', ['x1', 'y1', 'x2', 'y2'])
 
-# https://stackoverflow.com/a/42615559/2716305
-INSTALLED = getattr(sys, 'frozen', False)
-
 def get_version():
-    version_file = get_app_dir() / 'version'
+    version_file = dirs.APP_DIR / 'version'
+
     try:
         version_text = version_file.read_text().strip()
 
@@ -22,12 +21,6 @@ def get_version():
     except:
         return None
 
-def get_app_dir():
-
-    if INSTALLED:
-        return Path(sys._MEIPASS) # pylint: disable=no-member
-    else:
-        return Path(__file__).parent
 
 def log(*args, **kwargs):
     print(*args,  **kwargs)

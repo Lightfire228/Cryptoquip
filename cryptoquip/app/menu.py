@@ -3,6 +3,7 @@ from cryptoquip.update.update import update
 from types import SimpleNamespace
 
 from .. import config
+from .. import dirs
 from .. import utils
 
 args = utils.args
@@ -33,7 +34,9 @@ def _usr_in():
 def _bail(msg):
 
     utils.log('Error:', msg)
-    input('(Press Enter to exit)')
+    
+    if dirs.INSTALLED:
+        input('(Press Enter to exit)')
     exit(1)
 
 def _to_menu_options(image_contexts):
