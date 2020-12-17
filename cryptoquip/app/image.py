@@ -152,7 +152,7 @@ def _crop_answer(image, boxes):
     answer_box = Box(0, answer_y1, width, clue_y1)
     clue_box   = Box(0,   clue_y1, width, height)
 
-    target_height      = height - (answer_box.y2 - answer_box.y1) + CLUE_PADDING
+    target_height      = height - answer_box.dy + CLUE_PADDING
     target_clue_height = puzzle_box.y2 + CLUE_PADDING
 
     # relative to target box

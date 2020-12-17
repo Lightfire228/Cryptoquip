@@ -18,6 +18,14 @@ class Box(namedtuple('Box', ['x1', 'y1', 'x2', 'y2'])):
 
         return Dim(dx, dy)
 
+    @property
+    def dx(self):
+        return self.x2 - self.x1
+
+    @property
+    def dy(self):
+        return self.y2 - self.y1
+
 
 def get_version():
     version_file = dirs.APP_DIR / 'version'
