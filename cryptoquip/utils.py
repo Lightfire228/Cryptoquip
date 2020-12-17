@@ -9,7 +9,15 @@ import argparse
 from . import dirs
 
 Dim = namedtuple('Dim', ['x1', 'y1'])
-Box = namedtuple('Box', ['x1', 'y1', 'x2', 'y2'])
+
+class Box(namedtuple('Box', ['x1', 'y1', 'x2', 'y2'])):
+
+    def to_dim(self):
+        dx = self.x2 - self.x1
+        dy = self.y2 - self.y1
+
+        return Dim(dx, dy)
+
 
 def get_version():
     version_file = dirs.APP_DIR / 'version'

@@ -11,24 +11,16 @@ from .. import utils_dev
 Dim = utils.Dim
 Box = utils.Box
 
-STRETCH = 0
-
-PAD_PIXELS    =   75
-TOP_BOX_Y     =   80
-BORDER_PIXELS =    1
-FOOTER_Y_SUN  = -191
-
-ANS_BOTTOM_Y        = -104
-ANS_HEADER_DIM      = Dim(101, 57)
-ANS_PIXEL_THRESHOLD = 225
-CLUE_PADDING        = 20
-
-DATE_BOX = Box(0, 0, 175, 65)
-
 WHITE = '#FFFFFF'
 
-FONT      = 'arial.ttf'
-FONT_SIZE = 40
+ANSWER_LEFT_THRESHOLD = 10
+
+HEADER_PADDING = 75
+CLUE_PADDING   = 50
+
+TEXT_FONT      = 'arial.ttf'
+TEXT_FONT_SIZE = 40
+TEXT_PADDING   = 10
 
 EXPORT_FORMAT = 'PNG'
 
@@ -37,31 +29,21 @@ def process_image(image_binary, image_context):
     
     image = Image.open(BytesIO(image_binary))
 
-    # if image_context.is_sunday:
-    #     image = _stretch_image(image)
-    #     image = _crop_footer(image)
-    # else:
-    #     image = _crop_answer(image)
-
-    # image = _hide_date(image)
-    # image = _insert_header_padding(image)
-    # image = _insert_text(image, image_context.format_date())
-
-    utils_dev.log_img(image, image_context.day_str)
+    utils_dev.log_img(image, 'test')
 
     boxes = _rectangulate(image)
+    image = _hide_date(image, boxes, image_context)
 
-    # print('boxes')
-    # for box in boxes:
-    #     print(f'  {box}')
+    # After cropping, `boxes` is no longer accurate; however,
+    # things are done bottom to top, so they don't need to be
+    if image_context.is_sunday:
+        image = _crop_footer(image, boxes)
+    else:
+        image = _crop_answer(image, boxes)
 
-    utils.log('Drawing')
-    _draw_boxes(image, boxes)
+    image = _insert_header_padding(image, boxes)
+    image = _insert_text(image, boxes, image_context.format_date())
 
-    utils.log('Saving')
-    utils_dev.log_img(image, image_context.day_str + '_line')
-
-    utils.log('Done')
     return image
 
 def _rectangulate(image):
@@ -71,8 +53,6 @@ def _rectangulate(image):
     rows = []
 
     line_ver = _merge_to_line(image)
-
-    print(line_ver.size)
 
     for y1, y2 in _find_black_line_segments(line_ver):
 
@@ -88,145 +68,107 @@ def _rectangulate(image):
 
     return rows
 
-def _draw_boxes(image, boxes):
+def _crop_footer(image, boxes):
+    width, _ = image.size
 
-    draw = ImageDraw.Draw(image)
+    # second from last row to get rid of whitespace between footer and clue
+    y_footer = boxes[-2][0].y2
 
-    for box in boxes:
-        draw.rectangle(box)
-    
-    return image
+    not_footer_box = Box(0, 0, width, y_footer) 
 
+    return image.crop(not_footer_box)
 
-def _stretch_image(image):
+def _hide_date(image, boxes, image_context):
 
-    width, height = image.size
+    width, _ = image.size
+    draw     = ImageDraw.Draw(image)
+    row      = boxes[0]
 
-    new_width = width + STRETCH
-    new_size  = (new_width, height)
+    # I could filter by counting the number of boxes expected by date
+    # but that could be subject to both date formatting and kerning
+    w_quarter  = width // 4
+    date_boxes = [ box for box in row if box.x1 < w_quarter ]
 
-    resize = image.resize(new_size)
-
-    return resize
-
-def _crop_footer(image):
-    width, height = image.size
-
-    footer_top_y = (FOOTER_Y_SUN + height) % height
-
-    top_box = Box(0, 0, width, footer_top_y)
-
-    return image.crop(top_box)
-
-def _hide_date(image):
-
-    draw = ImageDraw.Draw(image)
-
-    draw.rectangle(DATE_BOX, fill=WHITE)
+    for box in date_boxes:
+        draw.rectangle(box, fill=WHITE)
 
     return image
 
-def _insert_header_padding(image):
+def _insert_header_padding(image, boxes):
     width, height = image.size
 
-    top_box              = Box(0, 0, width, TOP_BOX_Y)
-    bottom_corner        = Dim(0, TOP_BOX_Y)
-    bottom_box           = Box(0, TOP_BOX_Y, width, height)
-    target_bottom_corner = Dim(0, TOP_BOX_Y + PAD_PIXELS)
+    header_row = boxes[0]
 
-    target_height = height + PAD_PIXELS
-    target_dim    = Dim(width, target_height)
+    header_y2        = header_row[0].y2
+    target_header_y2 = header_y2 + HEADER_PADDING
 
-    target = Image.new(image.mode, target_dim, WHITE)
+    target_height = height + HEADER_PADDING
+    target        = Image.new(image.mode, (width, target_height), color=WHITE)
 
-    top_region    = image.crop(top_box)
-    bottom_region = image.crop(bottom_box)
-    
-    target.paste(top_region,    top_box)
-    target.paste(bottom_region, target_bottom_corner)
+    header_box      = Box(0,                0, width, header_y2)
+    rest_box        = Box(0,        header_y2, width, height)
+    target_rest_box = Box(0, target_header_y2, width, target_height)
+
+    header_crop = image.crop(header_box)
+    rest_crop   = image.crop(rest_box)
+
+    target.paste(header_crop, header_box)
+    target.paste(rest_crop,   target_rest_box)
 
     return target
 
-def _crop_answer(image):
+##                                                                    
+#  Heights offset so as to crop out one and only one extra space      
+#                                                                     
+#  ############################################### _                  
+#  #                  CRYPTOQUIP                 #  |                 
+#  #  AA AAAAA AAAAAAAAA AAAAAAAAAAAAAAA AAAAAAA #  |                 
+#  #  AAAA AAAAAAA AAAAAAAA AAAAAAAAAA AAAAAAAAA #  | puzzle_box      
+#  #  AAA AAAAAAAAAAAAAAA AA AAAAAAAAAAA AAAAAAA #  |                 
+#  #                                             #  |                 
+#  #                                             # _| _               
+#  #  Yesterday's Cryptoquip: YY YYYYYYYY YYYYY  #     |              
+#  #  YYY YYYYYYYYYYY YYYYYYY YYYYYYYYY YYYYYYY  #     | answer_box   
+#  #                                             #     |              
+#  #                                             # _  _|              
+#  #       Today's Crypto Clue: A equals Y       # _| clue_box        
+#  ###############################################                    
+#                                                                     
+def _crop_answer(image, boxes):
     width, height = image.size
 
-    ans_bottom_y = (ANS_BOTTOM_Y + height) % height
-    ans_bottom_h = height - ans_bottom_y
+    # remove clue row
+    rows = boxes[:-1]
 
-    ans_top_y = _scan_ans_header(image)
+    # reverse and find the last (now first) row that doesn't start on the left edge
+    answer_row = [ r for r in rows[::-1] if r[0].x1 > ANSWER_LEFT_THRESHOLD ][0]
+    clue_row   = boxes[-1]
 
-    if ans_top_y == None:
-        utils.log('Unable to crop answer programmatically')
-        return image
+    answer_y1 = answer_row[0].y1
+    clue_y1   = clue_row  [0].y1
 
-    target_h   = height - (ans_bottom_y - ans_top_y)
-    target_dim = Dim(width, target_h + CLUE_PADDING)
+    # relative to image box
+    puzzle_box = Box(0,         0, width, answer_y1)
+    answer_box = Box(0, answer_y1, width, clue_y1)
+    clue_box   = Box(0,   clue_y1, width, height)
 
-    top_box    = Box(0,             0, width, ans_top_y)
-    bottom_box = Box(0, ans_bottom_y, width, height)
+    target_height      = height - (answer_box.y2 - answer_box.y1) + CLUE_PADDING
+    target_clue_height = puzzle_box.y2 + CLUE_PADDING
 
-    target_top    = top_box
-    target_bottom = Box(
-        0,     target_top.y2 + CLUE_PADDING,
-        width, target_top.y2 + CLUE_PADDING + ans_bottom_h
-    )
+    # relative to target box
+    target_box        = Box(0,                  0, width, target_height)
+    target_clue_box   = Box(0, target_clue_height, width, target_box.y2)
+    target_puzzle_box = puzzle_box
 
-    target = Image.new(image.mode, target_dim, WHITE)
+    target = Image.new(image.mode, target_box.to_dim(), color=WHITE)
 
-    top_region    = image.crop(top_box)
-    bottom_region = image.crop(bottom_box)
-    
-    target.paste(top_region,    target_top)
-    target.paste(bottom_region, target_bottom)
+    puzzle_crop = image.crop(puzzle_box)
+    clue_crop   = image.crop(clue_box)
+
+    target.paste(puzzle_crop, target_puzzle_box)
+    target.paste(clue_crop,   target_clue_box)
 
     return target
-
-
-def _scan_ans_header(image):
-    width, height = image.size
-
-    _, ans_header_h = ANS_HEADER_DIM
-
-    ans_bottom_h = (ANS_BOTTOM_Y + height) % height
-    ans_top_h    = ans_bottom_h - ans_header_h 
-
-    search_white_ans  = True
-    search_white_line = False
-    search_black_line = False
-    for dy in reversed(range(ans_top_h)):
-        ans_box  = _dim_to_box(ANS_HEADER_DIM, (0, dy))
-        line_box = _dim_to_box((width, 1),     (0, dy))
-
-        ans_candidate = image.crop(ans_box)
-        line          = image.crop(line_box)
-
-        def is_white(img):
-            return (
-                p > ANS_PIXEL_THRESHOLD
-                for p in _iter_pixels(img)
-            )
-        
-        is_white_ans  = is_white(ans_candidate)
-        is_white_line = is_white(line)
-
-        # look for first large chunk of white on left side of screen
-        if search_white_ans and all(is_white_ans):
-            search_white_ans  = False
-            search_white_line = True
-        
-        # dy is now in the middle of the top answer row
-
-        # look for first line of white pixels after that
-        elif search_white_line and all(is_white_line):
-            search_white_line = False
-            search_black_line = True
-        
-        # look for first line of black pixels after that
-        elif search_black_line and not all(is_white_line):
-            # bottom y of the last clue row
-            return dy +1
-
-    return None
 
 ######################################################
 # Utils
@@ -308,56 +250,23 @@ def _find_black_line_segments(line):
 
     
 
-def _iter_pixels(image):
+def _insert_text(image, boxes, text):
 
-    w, h = image.size
-
-    for dy in range(h):
-        for dx in range(w):
-            yield image.getpixel((dx, dy))
-
-def _dim_to_box(dim, pos):
-    x, y = pos
-    w, h = dim
-
-    return Box(x, y, x + w, y + h)
-
-def _box_to_dim(box):
-
-    x, y, dx, dy = box
-
-    return Dim(dx - x, dy - y)
-
-
-def _insert_text(image, text):
+    width, _ = image.size
 
     draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype(TEXT_FONT, TEXT_FONT_SIZE)
 
-    font = ImageFont.truetype(FONT, FONT_SIZE)
+    header_y2 = boxes[0][0].y2
 
     text_box     = font.getmask(text).getbbox()
-    text_center  = text_box[2]   // 2
-    image_center = image.size[0] // 2
+    text_center  = text_box[2] // 2
+    image_center = width       // 2
 
     offset_width  = image_center - text_center
-    offset_height = TOP_BOX_Y + 10
+    offset_height = header_y2    + TEXT_PADDING
     offset_dim    = Dim(offset_width, offset_height)
     
     draw.text(offset_dim, text, font=font, fill='black')
 
     return image
-
-# don't think this is needed, since image is on paper
-def _add_border(image, color=WHITE):
-
-    width, height = image.size
-    border        = BORDER_PIXELS * 2
-
-    dim = Dim(width + border, height + border)
-
-    target = Image.new(image.mode, dim, color)
-
-    region = image.crop(Box(0, 0, width, height))
-    target.paste(region, Dim(BORDER_PIXELS, BORDER_PIXELS))
-
-    return target

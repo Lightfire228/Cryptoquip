@@ -1,7 +1,8 @@
 
-from pathlib     import Path
+from pathlib import Path
 
 from bs4 import BeautifulSoup
+from PIL import ImageDraw
 
 _folder = Path('./out')
 
@@ -33,3 +34,12 @@ def log_pdf(pdf_binary, filename='test'):
     file_ = _folder / f'{filename}.pdf'
 
     file_.write_bytes(pdf_binary)
+
+def draw_boxes(image, boxes):
+
+    draw = ImageDraw.Draw(image)
+
+    for box in boxes:
+        draw.rectangle(box)
+    
+    return image
