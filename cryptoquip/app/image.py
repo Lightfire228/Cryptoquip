@@ -1,8 +1,12 @@
 from io import BytesIO
 
-from PIL import Image, ImageDraw, ImageFont
+import itertools
+import time
+
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 from .. import utils
+from .. import utils_dev
 
 Dim = utils.Dim
 Box = utils.Box
@@ -29,24 +33,70 @@ FONT_SIZE = 40
 EXPORT_FORMAT = 'PNG'
 
 
-
 def process_image(image_binary, image_context):
     
     image = Image.open(BytesIO(image_binary))
 
-    if image_context.is_sunday:
-        image = _stretch_image(image)
-        image = _crop_footer(image)
-    else:
-        image = _crop_answer(image)
+    # if image_context.is_sunday:
+    #     image = _stretch_image(image)
+    #     image = _crop_footer(image)
+    # else:
+    #     image = _crop_answer(image)
 
-    image = _hide_date(image)
-    image = _insert_header_padding(image)
-    image = _insert_text(image, image_context.format_date())
+    # image = _hide_date(image)
+    # image = _insert_header_padding(image)
+    # image = _insert_text(image, image_context.format_date())
 
-    # utils_dev.log_img(image, image_context.day_str)
+    utils_dev.log_img(image, image_context.day_str)
 
+    boxes = _rectangulate(image)
+
+    # print('boxes')
+    # for box in boxes:
+    #     print(f'  {box}')
+
+    utils.log('Drawing')
+    _draw_boxes(image, boxes)
+
+    utils.log('Saving')
+    utils_dev.log_img(image, image_context.day_str + '_line')
+
+    utils.log('Done')
     return image
+
+def _rectangulate(image):
+
+    width, _ = image.size
+
+    rows = []
+
+    line_ver = _merge_to_line(image)
+
+    print(line_ver.size)
+
+    for y1, y2 in _find_black_line_segments(line_ver):
+
+        row = []
+
+        box_hor  = image.crop((0, y1, width, y2))
+        line_hor = _merge_to_line(box_hor, vertical=False)
+
+        for x1, x2 in _find_black_line_segments(line_hor):
+            row.append(Box(x1, y1, x2, y2))
+        
+        rows.append(row)
+
+    return rows
+
+def _draw_boxes(image, boxes):
+
+    draw = ImageDraw.Draw(image)
+
+    for box in boxes:
+        draw.rectangle(box)
+    
+    return image
+
 
 def _stretch_image(image):
 
@@ -177,6 +227,86 @@ def _scan_ans_header(image):
             return dy +1
 
     return None
+
+######################################################
+# Utils
+
+## 
+# Abuses pillow to merge all black pixels into a single line by "folding" 
+# the image onto itself repeatedly.  
+def _merge_to_line(image, vertical=True):
+
+    target = image
+
+    if not vertical:
+        target = target.transpose(Image.ROTATE_90)
+
+    w, h = target.size
+
+    while (w > 1):
+        w_half = w // 2
+
+        box1 = Box(0,      0, w_half, h)
+        box2 = Box(w_half, 0, w,      h)
+
+        half   = target.crop(box2)
+        target = target.crop(box1)
+
+        # uses the image itself as a mask, to transfer only black pixels
+        # but must invert the mask because only white pixels are transferred
+        mask = _invert_image(half)
+
+        target.paste(half, mask=mask)
+
+        w = w_half
+
+    if not vertical:
+        target = target.transpose(Image.ROTATE_270)
+
+    return target
+
+# no such built-in function for mode 1 images 
+def _invert_image(image):
+    invert = image.convert('L')
+    invert = ImageOps.invert(invert)
+    return invert.convert('1')
+
+def _find_black_line_segments(line):
+
+    target = line
+
+    width, height = target.size
+
+    if not (width != 1 or height != 1):
+        raise Exception('Image must be a line (width or height must be 1)')
+
+    if width != 1:
+        target        = target.transpose(Image.ROTATE_270)
+        width, height = target.size
+
+    y1 = None
+    was_white = target.getpixel((0, 0))
+
+    if not was_white:
+        y1 = 0
+
+    for y in range(1, height):
+        is_white = target.getpixel((0, y)) != 0
+
+        if is_white ^ was_white:
+
+            if was_white:
+                y1 = y
+            else:
+                yield (y1, y)
+                y1 = None
+
+            was_white = is_white
+    
+    if y1 != None:
+        yield (y1, height)
+
+    
 
 def _iter_pixels(image):
 

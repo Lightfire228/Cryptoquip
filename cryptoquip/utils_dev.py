@@ -1,15 +1,11 @@
 
 from pathlib     import Path
-from collections import namedtuple
 
 from bs4 import BeautifulSoup
 
 _folder = Path('./out')
 
 _folder.mkdir(exist_ok=True, parents=True)
-
-Dim = namedtuple('Dim', ['x1', 'y1'])
-Box = namedtuple('Box', ['x1', 'y1', 'x2', 'y2'])
 
 
 def log_bs4(data, filename='test', wrap=False):
