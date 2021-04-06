@@ -186,7 +186,9 @@ def _merge_to_line(image, vertical=True):
     w, h = target.size
 
     while (w > 1):
-        w_half = w // 2
+        # +1 to guarantee that the "target" half is always >= the "mask" half, which prevents
+        # unintented image cropping
+        w_half = (w + 1) // 2
 
         box1 = Box(0,      0, w_half, h)
         box2 = Box(w_half, 0, w,      h)
