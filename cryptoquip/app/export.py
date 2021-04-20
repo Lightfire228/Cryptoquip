@@ -40,6 +40,9 @@ def _convert_to_letter_size(image, image_context):
     px_scale_factor = _letter_to_pixel_scale_factor(image, image_context.is_sunday)
     target_dim_px   = _scale_dim(LETTER_DIM_IN, px_scale_factor)
 
+    if image_context.is_sunday:
+        target_dim_px = Dim(target_dim_px.x1 -1, target_dim_px.y1)
+
     target = Image.new(image.mode, target_dim_px, WHITE)
 
     target = _paste_corners(target, image, px_scale_factor)
