@@ -113,7 +113,7 @@ def _extract_date(card):
 def _extract_pdf_url(crypto_html, uuid):
     root = BeautifulSoup(crypto_html, PARSER)
 
-    div   = root.find('div', id=f'file-{uuid}')
+    div   = root.find('div', id=f'asset-content')
     a_tag = div.find('a')
 
     href  = a_tag.attrs['href']
