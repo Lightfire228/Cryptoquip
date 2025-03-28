@@ -1,6 +1,0 @@
-bs4
-packaging
-pillow
-pyinstaller
-PyPDF2
-requests
