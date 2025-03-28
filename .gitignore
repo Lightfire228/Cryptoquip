@@ -14,3 +14,7 @@ word_docs/
 
 config.json
 test.py
+
+# Added by cargo
+
+/target
