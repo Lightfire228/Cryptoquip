@@ -4,4 +4,6 @@ version = "0.2.0"
 edition = "2021"
 
 [dependencies]
+chrono = "0.4.40"
 html5ever = "0.30.0"
+reqwest = { version = "0.12.15", features = ["blocking"] }
