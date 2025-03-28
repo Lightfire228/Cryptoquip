@@ -12,12 +12,8 @@ enum MakeRequestError {
 
 }
 
-pub fn get_home_page() {
-
-    let body = get(URL);
-
-    println!("{}", body);
-
+pub fn get_home_page() -> String {
+    get(URL)
 }
 
 fn _make_request(url: &str) -> Result<String, MakeRequestError> {

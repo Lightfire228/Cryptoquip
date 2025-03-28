@@ -1,19 +1,5 @@
 pub mod request;
+pub mod image_contexts;
 
-use chrono::{DateTime, Local};
-
-pub struct ImageContext {
-    ordinal: usize,
-    url:     String,
-    date:    DateTime<Local>,
-}
-
-impl ImageContext {
-    pub fn new() -> Self {
-        Self {
-            ordinal: 0,
-            url:     String::from(""),
-            date:    Local::now(),
-        }
-    }
-}
+pub use request::get_home_page;
+pub use image_contexts::get_image_contexts;

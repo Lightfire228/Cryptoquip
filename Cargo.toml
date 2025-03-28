@@ -5,5 +5,5 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.40"
-html5ever = "0.30.0"
 reqwest = { version = "0.12.15", features = ["blocking"] }
+scraper = "0.23.1"
