@@ -1,25 +1,39 @@
-use std::convert::Infallible;
+use std::{io::{self, Write}, num::IntErrorKind};
 
 use crate::website::image_contexts::ImageContext;
 
-type BiMenu<'a> = (Vec<&'a MenuOption>, Vec<&'a MenuOption>);
+type BiMenu<'a>          = (Vec<&'a MenuOption>, Vec<&'a MenuOption>);
+type MenuResult<T>       = Result<T,     MenuErrorType>; 
 
+pub fn choose_image(images: Vec<ImageContext>) -> Option<ImageContext> {
+    use MenuErrorType::*;
 
-pub fn choose_image(images: Vec<ImageContext>) -> ImageContext {
+    match (|| {
 
-    let menu_options: Vec<MenuOption> = images
-        .into_iter()
-        .map(|x| MenuOption::new(x))
-        .collect()
-    ;
+        let menu_options: Vec<MenuOption> = images
+            .into_iter()
+            .map(|x| MenuOption::new(x))
+            .collect()
+        ;
+    
+        if menu_options.len() == 0 {
+            Err(NoImagesFound)?
+        }
+    
+        display_menu(
+            &bifurcate(menu_options.iter().collect())
+        );
 
-    assert!(menu_options.len() > 0, "No images found");
+        let index = get_user_selection(menu_options.len()).ok_or(Quit)?;
 
-    display_menu(
-        &bifurcate(menu_options.iter().collect())
-    );
+        Ok(menu_options[index].context.clone())
 
-    menu_options[0].context.clone()
+    })() {
+        Err(Quit) => None,
+        Ok (x)    => Some(x),
+        Err(err)  => display_error(err),
+    }
+
 }
 
 
@@ -42,6 +56,22 @@ impl ColSizes {
         }
     }
 }
+
+enum MenuErrorType {
+    StdInFailed,
+    NoImagesFound,
+    StdOutFlushFailed,
+    Quit,
+}
+
+enum UserSelectionType {
+    NumberFormatErr,
+    NumberOutOfRange(usize),
+    IOErr(MenuErrorType),
+    Quit,
+}
+
+
 
 
 impl MenuOption {
@@ -79,6 +109,103 @@ impl MenuOption {
 enum Align {
     Right,
     Left,
+}
+
+fn display_error(err: MenuErrorType) -> ! {
+    use MenuErrorType::*;
+
+    match err {
+        StdInFailed         => panic!("Unable to read from stdin"),
+        StdOutFlushFailed   => panic!("Unable to flush stdout"),
+        NoImagesFound       => panic!("No images found"),
+        Quit                => panic!("User Quit (Unreachable)"),
+    }
+}
+
+// TODO: Should prolly extract this into it's own module
+fn get_user_selection(menu_len: usize) -> Option<usize> {
+    use UserSelectionType::*;
+
+    fn get_usr_in() -> Result<String, UserSelectionType> {
+        Ok(get_stdin().map_err(|e| IOErr(e))?)
+    }
+
+    fn check_quit_input(usr_in: &str) -> Result<(), UserSelectionType> {
+        if usr_in.to_lowercase() == "q" {
+            return Err(Quit);
+        }
+
+        Ok(())
+    }
+
+    fn convert_usize (usr_in: &str, menu_len: usize) -> Result<usize, UserSelectionType> {
+        match usr_in.parse::<usize>() {
+            Err(err) => match err.kind() {
+                // If no input, default to 0
+                IntErrorKind::Empty       => Ok(0),
+
+                IntErrorKind::NegOverflow => Err(NumberOutOfRange(menu_len)),
+                IntErrorKind::PosOverflow => Err(NumberOutOfRange(menu_len)),
+                _                         => Err(NumberFormatErr),
+            },
+            Ok(i) => Ok(i),
+        }
+    }
+
+    fn check_range (index: usize, menu_len: usize) -> Result<usize, UserSelectionType> {
+        if index >= menu_len {
+            return Err(NumberOutOfRange(menu_len));
+        }
+
+        Ok(index)
+    }
+
+    loop {
+
+        match (|| {
+
+            let usr_in = get_usr_in()?;
+            let usr_in = usr_in.trim();
+
+            check_quit_input(&usr_in)?;
+
+            let index = convert_usize(&usr_in, menu_len)?;
+
+            check_range(index, menu_len)?;
+
+            Ok(index)
+        })() {
+            Ok (x)    => return Some(x),
+            Err(Quit) => return None,
+            Err(err)  => display_menu_error(err),
+        }
+    }
+
+}
+
+fn display_menu_error(err: UserSelectionType) {
+    use UserSelectionType::*;
+
+    match err {
+        NumberFormatErr             => println!("Unknown input (must be a number or Q)"),
+        NumberOutOfRange(menu_len)  => println!("Number out of bounds, must be 0 to {}", menu_len -1),
+        IOErr(err)                  => display_error(err),
+        Quit                        => ()
+    }
+}
+
+fn get_stdin() -> MenuResult<String> {
+    use MenuErrorType::*;
+
+    print!("> ");
+    io::stdout().flush().map_err(|_| StdOutFlushFailed)?;
+
+    let mut buffer = String::new();
+    let     stdin  = io::stdin();
+
+    stdin.read_line(&mut buffer).map_err(|_| StdInFailed)?;
+
+    Ok(buffer)
 }
 
 fn display_menu(bi_menu: &BiMenu) {
@@ -139,11 +266,8 @@ fn bifurcate(menu_options: Vec<&MenuOption>) -> BiMenu {
     let mut bi_menu = (Vec::new(), Vec::new());
 
     for (i, x) in menu_options.into_iter().enumerate() {
-        match i % 2 {
-            0 => bi_menu.0.push(x),
-            1 => bi_menu.1.push(x),
-            _ => assert!(false),
-        }
+        if i % 2 == 0 { bi_menu.0.push(x) }
+        else          { bi_menu.1.push(x) }
     }
 
     bi_menu

@@ -3,7 +3,8 @@
 use chrono::{DateTime, Datelike, FixedOffset, Weekday};
 use scraper::{selectable::Selectable, ElementRef, Html, Selector};
 
-type Elems<'a> = Vec<ElementRef<'a>>;
+type Elems<'a>      = Vec<ElementRef<'a>>;
+type ParseResult<T> = Result<T, ParseErrorType>;
 
 
 pub fn get_image_contexts(page: &str) -> Vec<ImageContext> {
@@ -19,10 +20,7 @@ pub fn get_image_contexts(page: &str) -> Vec<ImageContext> {
 
     match run() {
         Ok(x)  => x,
-        Err(e) => {
-            display_error(e);
-            panic!()
-        },
+        Err(e) => display_error(e),
     }
     
 }
@@ -83,9 +81,7 @@ enum ParseErrorType {
     UuidParseErr
 }
 
-type ParseResult<T> = Result<T, ParseErrorType>;
-
-fn display_error(err: ParseErrorType) {
+fn display_error(err: ParseErrorType) -> ! {
     use ParseErrorType::*;
 
     match err {
