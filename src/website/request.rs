@@ -4,16 +4,18 @@ use reqwest::StatusCode;
 
 static URL: &str = "https://www.cecildaily.com/diversions/cryptoquip/";
 
+
+pub fn get_home_page() -> String {
+    get(URL)
+}
+
+
 #[allow(non_camel_case_types)]
 enum MakeRequestError {
     RequestFailed,
     HTTP_Status(StatusCode),
     InvalidUTF8,
 
-}
-
-pub fn get_home_page() -> String {
-    get(URL)
 }
 
 fn _make_request(url: &str) -> Result<String, MakeRequestError> {

@@ -1,18 +1,10 @@
 
 
-use chrono::{DateTime, FixedOffset};
+use chrono::{DateTime, Datelike, FixedOffset, Weekday};
 use scraper::{selectable::Selectable, ElementRef, Html, Selector};
 
 type Elems<'a> = Vec<ElementRef<'a>>;
 
-#[derive(Debug)]
-pub struct ImageContext {
-    pub ordinal: usize,
-    pub url:     String,
-    pub date:    DateTime<FixedOffset>,
-}
-
-impl ImageContext {}
 
 pub fn get_image_contexts(page: &str) -> Vec<ImageContext> {
 
@@ -23,6 +15,45 @@ pub fn get_image_contexts(page: &str) -> Vec<ImageContext> {
 
     contexts
 }
+
+
+#[derive(Debug)]
+pub struct ImageContext {
+    pub ordinal: usize,
+    pub url:     String,
+    pub date:    DateTime<FixedOffset>,
+}
+
+impl ImageContext {
+    pub fn is_sunday(&self) -> bool {
+        self.date.weekday() == Weekday::Sun
+    }
+
+    pub fn day_str(&self) -> String {
+        self.date.format("%A").to_string()
+    }
+
+    pub fn date_str(&self) -> String {
+        self.date.format("%x").to_string()
+    }
+
+    pub fn uuid(&self) -> String {
+        
+        let uuid = self.url.split('/').last().expect("Unable to parse image UUID from url");
+
+        uuid
+            .replace("file_", "")
+            .replace(".html", "")
+    }
+
+    pub fn formatted_date(&self) -> String {
+        let day  = self.day_str();
+        let date = self.date.format("%x").to_string();
+        
+        format!("{} - {}", day, date)
+    }
+}
+
 
 fn extract_image_cards<'a>(document: &'a Html) -> Elems<'a> {
 
