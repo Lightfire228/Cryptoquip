@@ -1,4 +1,8 @@
+use std::convert::Infallible;
+
 use crate::website::image_contexts::ImageContext;
+
+type BiMenu<'a> = (Vec<&'a MenuOption>, Vec<&'a MenuOption>);
 
 
 pub fn choose_image(images: Vec<ImageContext>) -> ImageContext {
@@ -9,9 +13,13 @@ pub fn choose_image(images: Vec<ImageContext>) -> ImageContext {
         .collect()
     ;
 
-    display_menu(&menu_options);
+    assert!(menu_options.len() > 0, "No images found");
 
-    todo!()
+    display_menu(
+        &bifurcate(menu_options.iter().collect())
+    );
+
+    menu_options[0].context.clone()
 }
 
 
@@ -73,12 +81,24 @@ enum Align {
     Left,
 }
 
-fn display_menu(menu_options: &Vec<MenuOption>) {
+fn display_menu(bi_menu: &BiMenu) {
 
-    let cols = calc_cols(&menu_options);
+    let col_1 = &bi_menu.0;
+    let col_2 = &bi_menu.1;
 
-    for x in menu_options.iter() {
-        println!("{}", x.get_formatted(&cols));
+    let col_size_1 = calc_cols(&col_1);
+    let col_size_2 = calc_cols(&col_2);
+
+
+    for (first, second) in col_1.into_iter().zip(col_2) {
+        let first_str  = first .get_formatted(&col_size_1);
+        let second_str = second.get_formatted(&col_size_2);
+    
+        println!("  {} | {}", first_str, second_str);
+    }
+
+    if col_1.len() > col_2.len() {
+        println!("  {}", col_1.last().unwrap().get_formatted(&col_size_1));
     }
 }
 
@@ -103,7 +123,7 @@ fn max(a: usize, b: usize) -> usize {
     if a > b {a} else {b}
 }
 
-fn calc_cols(menu_options: &Vec<MenuOption>) -> ColSizes {
+fn calc_cols(menu_options: &Vec<&MenuOption>) -> ColSizes {
     let mut cols = ColSizes::new();
     for x in menu_options.iter() {
         cols.ord_col  = max(cols.ord_col,  x.ord_str() .len());
@@ -112,4 +132,19 @@ fn calc_cols(menu_options: &Vec<MenuOption>) -> ColSizes {
     }
 
     cols
+}
+
+fn bifurcate(menu_options: Vec<&MenuOption>) -> BiMenu {
+
+    let mut bi_menu = (Vec::new(), Vec::new());
+
+    for (i, x) in menu_options.into_iter().enumerate() {
+        match i % 2 {
+            0 => bi_menu.0.push(x),
+            1 => bi_menu.1.push(x),
+            _ => assert!(false),
+        }
+    }
+
+    bi_menu
 }

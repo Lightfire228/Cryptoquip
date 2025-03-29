@@ -17,7 +17,7 @@ pub fn get_image_contexts(page: &str) -> Vec<ImageContext> {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ImageContext {
     pub ordinal: usize,
     pub url:     String,
