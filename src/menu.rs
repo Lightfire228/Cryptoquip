@@ -1,6 +1,6 @@
 use std::{io::{self, Write}, num::IntErrorKind};
 
-use crate::website::image_contexts::ImageContext;
+use crate::{multi_line, website::image_contexts::ImageContext};
 
 type BiMenu<'a>          = (Vec<&'a MenuOption>, Vec<&'a MenuOption>);
 type MenuResult<T>       = Result<T,     MenuErrorType>; 
@@ -209,6 +209,13 @@ fn get_stdin() -> MenuResult<String> {
 }
 
 fn display_menu(bi_menu: &BiMenu) {
+
+    println!("{}", multi_line!(
+        "Which Crytoquip to download?",
+        " - press Enter to download the most recent",
+        " - press q to Quit",
+        "",
+    ));
 
     let col_1 = &bi_menu.0;
     let col_2 = &bi_menu.1;

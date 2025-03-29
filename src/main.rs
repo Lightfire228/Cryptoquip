@@ -1,6 +1,7 @@
 
 mod website;
 mod menu;
+mod macros;
 
 fn main() {
     let page = website::get_home_page();
