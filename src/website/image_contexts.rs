@@ -8,12 +8,23 @@ type Elems<'a> = Vec<ElementRef<'a>>;
 
 pub fn get_image_contexts(page: &str) -> Vec<ImageContext> {
 
-    let document = Html::parse_document(page);
+    let run = || {
+        let document = Html::parse_document(page);
+    
+        let cards    = extract_image_cards(&document)?;
+        let contexts = to_image_contexts(&cards)?;
+    
+        Ok(contexts)
+    };
 
-    let cards    = extract_image_cards(&document);
-    let contexts = to_image_contexts(&cards);
-
-    contexts
+    match run() {
+        Ok(x)  => x,
+        Err(e) => {
+            display_error(e);
+            panic!()
+        },
+    }
+    
 }
 
 
@@ -22,9 +33,25 @@ pub struct ImageContext {
     pub ordinal: usize,
     pub url:     String,
     pub date:    DateTime<FixedOffset>,
+    pub uuid:    String,
 }
 
 impl ImageContext {
+
+    fn new(i: usize, card: &ElementRef) -> ParseResult<Self> {
+
+        let url  = _extract_crypto_url(card)?;
+        let uuid = _parse_uuid        (&url)?;
+        let date = _extract_date      (card)?;
+
+        Ok(Self {
+            ordinal: i,
+            url,
+            date,
+            uuid,
+        })
+    }
+
     pub fn is_sunday(&self) -> bool {
         self.date.weekday() == Weekday::Sun
     }
@@ -37,15 +64,6 @@ impl ImageContext {
         self.date.format("%x").to_string()
     }
 
-    pub fn uuid(&self) -> String {
-        
-        let uuid = self.url.split('/').last().expect("Unable to parse image UUID from url");
-
-        uuid
-            .replace("file_", "")
-            .replace(".html", "")
-    }
-
     pub fn formatted_date(&self) -> String {
         let day  = self.day_str();
         let date = self.date.format("%x").to_string();
@@ -54,14 +72,43 @@ impl ImageContext {
     }
 }
 
+enum ParseErrorType {
+    ContentNotFound,
+    CardBodyNotFound,
+    AnchorTagNotFound,
+    UrlNotFound,
+    DateNotFound,
+    DateTimeAttributeNotFound,
+    DateTimeParseErr,
+    UuidParseErr
+}
 
-fn extract_image_cards<'a>(document: &'a Html) -> Elems<'a> {
+type ParseResult<T> = Result<T, ParseErrorType>;
 
-    let content_selector   = Selector::parse("#main-page-container").unwrap();
-    let card_grid_selector = Selector::parse("div .card-grid")      .unwrap();
-    let card_selector      = Selector::parse("div .card-container") .unwrap();
+fn display_error(err: ParseErrorType) {
+    use ParseErrorType::*;
 
-    let content   = document.select(&content_selector).next().expect("Unable to find main content body");
+    match err {
+        ContentNotFound           => panic!("Unable to find main content body"),
+        CardBodyNotFound          => panic!("Cannot find card body tag within the image card"),
+        AnchorTagNotFound         => panic!("Cannot find anchor tag from card body"),
+        UrlNotFound               => panic!("Cannot find url from anchor tag"),
+        DateNotFound              => panic!("Cannot find date within the image card"),
+        DateTimeAttributeNotFound => panic!("Cannot find 'datetime' attribute from time tag"),
+        DateTimeParseErr          => panic!("Cannot parse datetime"),
+        UuidParseErr              => panic!("Unable to parse image UUID from url"),
+    }
+}
+
+fn extract_image_cards<'a>(document: &'a Html) -> ParseResult<Elems<'a>> {
+
+    let content_selector   = _get_selector("#main-page-container");
+    let card_grid_selector = _get_selector("div .card-grid");
+    let card_selector      = _get_selector("div .card-container");
+
+    let content   = document.select(&content_selector).next()
+        .ok_or(ParseErrorType::ContentNotFound)?
+    ;
     let card_grid = content .select(&card_grid_selector).collect::<Elems>();
 
     let cards = card_grid
@@ -72,59 +119,69 @@ fn extract_image_cards<'a>(document: &'a Html) -> Elems<'a> {
         .collect::<Vec<ElementRef>>()
     ;
 
-    cards
+    Ok(cards)
 }
 
-fn to_image_contexts(cards: &Elems) -> Vec<ImageContext> {
+fn _get_selector(str: &str) -> Selector {
+    Selector::parse(str).unwrap()
+}
+
+fn to_image_contexts(cards: &Elems) -> ParseResult<Vec<ImageContext>> {
     cards
         .iter()
         .enumerate()
-        .map(|c| {
-            ImageContext {
-                ordinal: c.0,
-                url:     _extract_crypto_url(c.1),
-                date:    _extract_date      (c.1),
-            }
-        })
+        .map(|(i, card)| ImageContext::new(i, card))
         .collect()
 }
 
-fn _extract_crypto_url(card: &ElementRef) -> String {
+fn _extract_crypto_url(card: &ElementRef) -> ParseResult<String> {
+    use ParseErrorType::*;
 
-    let body_selector = Selector::parse(".card-body").unwrap();
-    let a_selector    = Selector::parse("a")         .unwrap();
+    let body_selector = _get_selector(".card-body");
+    let a_selector    = _get_selector("a");
 
-    let body = _select_first(&card, &body_selector, "Cannot find card body tag within the image card");
-    let a    = _select_first(&body, &a_selector,    "Cannot find anchor tag from card body");
+    let body = _select_first(&card, &body_selector).ok_or(CardBodyNotFound) ?;
+    let a    = _select_first(&body, &a_selector)   .ok_or(AnchorTagNotFound)?;
 
-    let href = a.value().attr("href").expect("Cannot find url from anchor tag");
+    let href = a.value().attr("href").ok_or(UrlNotFound)?;
 
-    String::from(href)
+    Ok(String::from(href))
 }
 
-fn _extract_date(card: &ElementRef) -> DateTime<FixedOffset> {
+fn _extract_date(card: &ElementRef) -> ParseResult<DateTime<FixedOffset>> {
+    use ParseErrorType::*;
 
-    let time_selector = Selector::parse("time").unwrap();
+    let time_selector = _get_selector("time");
 
-    let time = _select_first(&card, &time_selector, "Cannot find date within the image card");
+    let time = _select_first(&card, &time_selector).ok_or(DateNotFound)             ?;
+    let iso  = time.value().attr("datetime")       .ok_or(DateTimeAttributeNotFound)?;
 
-    let iso  = time.value().attr("datetime").expect("Cannot find 'datetime' attribute from time tag");
+    let parsed = DateTime::parse_from_rfc3339(iso).map_err(|_| DateTimeParseErr)?;
 
-    let parsed = DateTime::parse_from_rfc3339(iso).expect("Cannot parse datetime");
-
-    parsed
+    Ok(parsed)
 }
 
-fn _select_first<'a>(el: &'a ElementRef, selector: &Selector, msg: &str) -> ElementRef<'a> {
-    el.select(selector).next().expect(msg).to_owned()
+fn _select_first<'a>(el: &'a ElementRef, selector: &Selector) -> Option<ElementRef<'a>> {
+    Some(el.select(selector).next()?.to_owned())
 }
 
 fn _select_all<'a>(el: &'a ElementRef, selector: &Selector) -> Vec<ElementRef<'a>> {
     el.select(selector).collect()
 }
 
-fn _get_attr<'a>(el: &'a ElementRef, attr: &str, msg: &str) -> String {
-    let val = el.value().attr(attr).expect(msg);
+fn _get_attr<'a>(el: &'a ElementRef, attr: &str) -> Option<String> {
+    let val = el.value().attr(attr)?;
 
-    String::from(val)
+    Some(String::from(val))
+}
+
+fn _parse_uuid(url: &str) -> ParseResult<String> {
+    use ParseErrorType::*;
+        
+    let uuid = url.split('/').last().ok_or(UuidParseErr)?;
+
+    Ok(uuid
+        .replace("file_", "")
+        .replace(".html", "")
+    )
 }
