@@ -2,11 +2,17 @@ use std::io::Read;
 
 use reqwest::StatusCode;
 
+use super::image_contexts::ImageContext;
+
 static URL: &str = "https://www.cecildaily.com/diversions/cryptoquip/";
 
 
 pub fn get_home_page() -> String {
     get(URL)
+}
+
+pub fn get_image_page(image: ImageContext) {
+    
 }
 
 

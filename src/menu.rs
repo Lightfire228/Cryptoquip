@@ -5,7 +5,7 @@ use crate::{multi_line, website::image_contexts::ImageContext};
 type BiMenu<'a>          = (Vec<&'a MenuOption>, Vec<&'a MenuOption>);
 type MenuResult<T>       = Result<T,     MenuErrorType>; 
 
-pub fn choose_image(images: Vec<ImageContext>) -> Option<ImageContext> {
+pub fn choose_image(images: Vec<ImageContext>) -> SelectionType {
     use MenuErrorType::*;
 
     match (|| {
@@ -29,19 +29,23 @@ pub fn choose_image(images: Vec<ImageContext>) -> Option<ImageContext> {
         Ok(menu_options[index].context.clone())
 
     })() {
-        Err(Quit) => None,
-        Ok (x)    => Some(x),
+        Err(Quit) => SelectionType::Quit,
+        Ok (x)    => SelectionType::Image(x),
         Err(err)  => display_error(err),
     }
 
 }
 
+pub enum SelectionType {
+    Image(ImageContext),
+    Quit,
+}
 
-pub struct MenuOption {
+struct MenuOption {
     context: ImageContext,
 }
 
-pub struct ColSizes {
+struct ColSizes {
     pub ord_col:  usize,
     pub day_col:  usize,
     pub date_col: usize,

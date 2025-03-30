@@ -9,16 +9,14 @@ type ParseResult<T> = Result<T, ParseErrorType>;
 
 pub fn get_image_contexts(page: &str) -> Vec<ImageContext> {
 
-    let run = || {
+    match (|| {
         let document = Html::parse_document(page);
     
         let cards    = extract_image_cards(&document)?;
         let contexts = to_image_contexts(&cards)?;
     
         Ok(contexts)
-    };
-
-    match run() {
+    })() {
         Ok(x)  => x,
         Err(e) => display_error(e),
     }
