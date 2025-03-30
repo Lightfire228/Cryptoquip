@@ -1,7 +1,11 @@
 
 
 use chrono::{DateTime, Datelike, FixedOffset, Weekday};
-use scraper::{selectable::Selectable, ElementRef, Html, Selector};
+use scraper::{selectable::Selectable, ElementRef, Html};
+
+use crate::website::get_attr;
+
+use super::{get_selector, select_first};
 
 type Elems<'a>      = Vec<ElementRef<'a>>;
 type ParseResult<T> = Result<T, ParseErrorType>;
@@ -36,9 +40,9 @@ impl ImageContext {
 
     fn new(i: usize, card: &ElementRef) -> ParseResult<Self> {
 
-        let url  = _extract_crypto_url(card)?;
-        let uuid = _parse_uuid        (&url)?;
-        let date = _extract_date      (card)?;
+        let url  = extract_crypto_url(card)?;
+        let uuid = parse_uuid        (&url)?;
+        let date = extract_date      (card)?;
 
         Ok(Self {
             ordinal: i,
@@ -96,9 +100,9 @@ fn display_error(err: ParseErrorType) -> ! {
 
 fn extract_image_cards<'a>(document: &'a Html) -> ParseResult<Elems<'a>> {
 
-    let content_selector   = _get_selector("#main-page-container");
-    let card_grid_selector = _get_selector("div .card-grid");
-    let card_selector      = _get_selector("div .card-container");
+    let content_selector   = get_selector("#main-page-container");
+    let card_grid_selector = get_selector("div .card-grid");
+    let card_selector      = get_selector("div .card-container");
 
     let content   = document.select(&content_selector).next()
         .ok_or(ParseErrorType::ContentNotFound)?
@@ -116,10 +120,6 @@ fn extract_image_cards<'a>(document: &'a Html) -> ParseResult<Elems<'a>> {
     Ok(cards)
 }
 
-fn _get_selector(str: &str) -> Selector {
-    Selector::parse(str).unwrap()
-}
-
 fn to_image_contexts(cards: &Elems) -> ParseResult<Vec<ImageContext>> {
     cards
         .iter()
@@ -128,48 +128,35 @@ fn to_image_contexts(cards: &Elems) -> ParseResult<Vec<ImageContext>> {
         .collect()
 }
 
-fn _extract_crypto_url(card: &ElementRef) -> ParseResult<String> {
+fn extract_crypto_url(card: &ElementRef) -> ParseResult<String> {
     use ParseErrorType::*;
 
-    let body_selector = _get_selector(".card-body");
-    let a_selector    = _get_selector("a");
+    let body_selector = get_selector(".card-body");
+    let a_selector    = get_selector("a");
 
-    let body = _select_first(&card, &body_selector).ok_or(CardBodyNotFound) ?;
-    let a    = _select_first(&body, &a_selector)   .ok_or(AnchorTagNotFound)?;
+    let body = select_first(&card, &body_selector).ok_or(CardBodyNotFound) ?;
+    let a    = select_first(&body, &a_selector)   .ok_or(AnchorTagNotFound)?;
 
-    let href = a.value().attr("href").ok_or(UrlNotFound)?;
+    let href = get_attr(&a, "href").ok_or(UrlNotFound)?;
 
     Ok(String::from(href))
 }
 
-fn _extract_date(card: &ElementRef) -> ParseResult<DateTime<FixedOffset>> {
+fn extract_date(card: &ElementRef) -> ParseResult<DateTime<FixedOffset>> {
     use ParseErrorType::*;
 
-    let time_selector = _get_selector("time");
+    let time_selector = get_selector("time");
 
-    let time = _select_first(&card, &time_selector).ok_or(DateNotFound)             ?;
-    let iso  = time.value().attr("datetime")       .ok_or(DateTimeAttributeNotFound)?;
+    let time = select_first(&card, &time_selector).ok_or(DateNotFound)             ?;
+    let iso  = get_attr    (&time, "datetime")    .ok_or(DateTimeAttributeNotFound)?;
 
-    let parsed = DateTime::parse_from_rfc3339(iso).map_err(|_| DateTimeParseErr)?;
+    let parsed = DateTime::parse_from_rfc3339(&iso).map_err(|_| DateTimeParseErr)?;
 
     Ok(parsed)
 }
 
-fn _select_first<'a>(el: &'a ElementRef, selector: &Selector) -> Option<ElementRef<'a>> {
-    Some(el.select(selector).next()?.to_owned())
-}
 
-fn _select_all<'a>(el: &'a ElementRef, selector: &Selector) -> Vec<ElementRef<'a>> {
-    el.select(selector).collect()
-}
-
-fn _get_attr<'a>(el: &'a ElementRef, attr: &str) -> Option<String> {
-    let val = el.value().attr(attr)?;
-
-    Some(String::from(val))
-}
-
-fn _parse_uuid(url: &str) -> ParseResult<String> {
+fn parse_uuid(url: &str) -> ParseResult<String> {
     use ParseErrorType::*;
         
     let uuid = url.split('/').last().ok_or(UuidParseErr)?;
