@@ -1,6 +1,6 @@
 use std::{io::{self, Write}, num::IntErrorKind};
 
-use crate::{multi_line, website::image_contexts::ImageContext};
+use crate::{multi_line, website::ImageContext};
 
 type BiMenu<'a>          = (Vec<&'a MenuOption>, Vec<&'a MenuOption>);
 type MenuResult<T>       = Result<T,     MenuErrorType>; 

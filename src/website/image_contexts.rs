@@ -139,7 +139,7 @@ fn extract_crypto_url(card: &ElementRef) -> ParseResult<String> {
 
     let href = get_attr(&a, "href").ok_or(UrlNotFound)?;
 
-    Ok(String::from(href))
+    Ok(href.to_owned())
 }
 
 fn extract_date(card: &ElementRef) -> ParseResult<DateTime<FixedOffset>> {

@@ -1,18 +1,28 @@
 use std::io::Read;
 
-use reqwest::StatusCode;
+use reqwest::{blocking::{RequestBuilder, Response}, header::USER_AGENT, StatusCode};
 
 use super::image_contexts::ImageContext;
 
 static URL: &str = "https://www.cecildaily.com/diversions/cryptoquip/";
+static UA:  &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:79.0) Gecko/20100101 Firefox/79.0";
 
 
 pub fn get_home_page() -> String {
     get(URL)
 }
 
-pub fn get_image_page(image: ImageContext) {
-    
+pub fn get_image_page(image: &ImageContext) -> String {
+
+    let url = &image.url;
+    let url = url.strip_prefix("/").unwrap_or(&url);
+    let url = format!("{}{}", URL, url);
+
+    get(&url)
+}
+
+pub fn get_pdf(url: &str) -> Vec<u8> {
+    get_as_bytes(url)
 }
 
 
@@ -20,14 +30,15 @@ pub fn get_image_page(image: ImageContext) {
 enum MakeRequestError {
     RequestFailed,
     HTTP_Status(StatusCode),
-    InvalidUTF8,
+    ReadBodyStringFailed,
+    ReadBodyBinaryFailed,
 
 }
 
-fn _make_request(url: &str) -> Result<String, MakeRequestError> {
+fn _make_request(url: &str) -> Result<Response, MakeRequestError> {
     use MakeRequestError::*;
 
-    let mut res = reqwest::blocking::get(url)
+    let res = build_request(url).send()
         .map_err(|_| RequestFailed )?
     ;
 
@@ -35,28 +46,66 @@ fn _make_request(url: &str) -> Result<String, MakeRequestError> {
         return Err(HTTP_Status(res.status()));
     }
 
+    Ok(res)
+}
+
+fn _make_request_string(url: &str) -> Result<String, MakeRequestError> {
+    use MakeRequestError::*;
+
+    let mut res = _make_request(url)?;
+
     let mut body = String::new();
     res.read_to_string(&mut body)
-        .map_err(|_| InvalidUTF8 )?
+        .map_err(|_| ReadBodyStringFailed)?
+    ;
+
+    Ok(body)
+}
+
+fn _make_request_bytes(url: &str) -> Result<Vec<u8>, MakeRequestError> {
+    use MakeRequestError::*;
+
+    let mut res = _make_request(url)?;
+
+    let mut body = Vec::new();
+    res.read_to_end(&mut body)
+        .map_err(|_| ReadBodyBinaryFailed)?
     ;
 
     Ok(body)
 }
 
 fn get(url: &str) -> String {
+    get_as(url, &_make_request_string)
+}
+
+fn get_as_bytes(url: &str) -> Vec<u8> {
+    get_as(url, &_make_request_bytes)
+}
+
+fn get_as<T>(url: &str, make_request: &dyn Fn(&str) -> Result<T, MakeRequestError>) -> T {
     use MakeRequestError::*;
-    let res = _make_request(url);
+
+    let res = make_request(url);
 
     match res {
         Err(t) => { 
             eprintln!("Url: '{}'", url);
             match t {
-                RequestFailed       => panic!("Unable to make request"),
-                HTTP_Status(status) => panic!("Returned status '{}'", status.as_u16()),
-                InvalidUTF8         => panic!("Returned invalid UTF-8"),
+                RequestFailed        => panic!("Unable to make request"),
+                HTTP_Status(status)  => panic!("Returned status '{}'", status.as_u16()),
+                ReadBodyStringFailed => panic!("Unable to parse request body as UTF-8"),
+                ReadBodyBinaryFailed => panic!("Unable to parse request body as bytes"),
             }
         }
 
         Ok(r) => r,
     }
+}
+
+fn build_request(url: &str) -> RequestBuilder {
+    let client = reqwest::blocking::Client::new();
+    
+    // need to set the UA, or some requests will fail with a 429
+    client.get(url).header(USER_AGENT, UA)
 }

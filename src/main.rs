@@ -1,4 +1,4 @@
-use website::image_contexts::ImageContext;
+use website::ImageContext;
 
 
 mod website;
@@ -15,11 +15,11 @@ fn main() {
 
     match chosen {
         Image(ctx) => handle_selection(ctx),
-        Quit       => ()
+        Quit       => return,
     }
 }
 
 
-fn handle_selection(image: ImageContext) {
-
+fn handle_selection(ctx: ImageContext) {
+    website::download_pdf_binary(ctx);
 }

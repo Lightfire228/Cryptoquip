@@ -1,2 +1,7 @@
 # Custom Dictionary Words
 prolly
+chrono
+reqwest
+Elems
+Datelike
+Crytoquip
