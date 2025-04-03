@@ -4,6 +4,7 @@ use website::ImageContext;
 mod website;
 mod menu;
 mod macros;
+mod image;
 
 fn main() {
     use menu::SelectionType::*;
