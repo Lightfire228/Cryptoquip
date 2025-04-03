@@ -33,7 +33,6 @@ pub struct ImageContext {
     pub ordinal: usize,
     pub url:     String,
     pub date:    DateTime<FixedOffset>,
-    pub uuid:    String,
 }
 
 impl ImageContext {
@@ -41,14 +40,12 @@ impl ImageContext {
     fn new(i: usize, card: &ElementRef) -> ParseResult<Self> {
 
         let url  = extract_crypto_url(card)?;
-        let uuid = parse_uuid        (&url)?;
         let date = extract_date      (card)?;
 
         Ok(Self {
             ordinal: i,
             url,
             date,
-            uuid,
         })
     }
 
@@ -80,7 +77,6 @@ enum ParseErrorType {
     DateNotFound,
     DateTimeAttributeNotFound,
     DateTimeParseErr,
-    UuidParseErr
 }
 
 fn display_error(err: ParseErrorType) -> ! {
@@ -94,7 +90,6 @@ fn display_error(err: ParseErrorType) -> ! {
         DateNotFound              => panic!("Cannot find date within the image card"),
         DateTimeAttributeNotFound => panic!("Cannot find 'datetime' attribute from time tag"),
         DateTimeParseErr          => panic!("Cannot parse datetime"),
-        UuidParseErr              => panic!("Unable to parse image UUID from url"),
     }
 }
 
@@ -153,16 +148,4 @@ fn extract_date(card: &ElementRef) -> ParseResult<DateTime<FixedOffset>> {
     let parsed = DateTime::parse_from_rfc3339(&iso).map_err(|_| DateTimeParseErr)?;
 
     Ok(parsed)
-}
-
-
-fn parse_uuid(url: &str) -> ParseResult<String> {
-    use ParseErrorType::*;
-        
-    let uuid = url.split('/').last().ok_or(UuidParseErr)?;
-
-    Ok(uuid
-        .replace("file_", "")
-        .replace(".html", "")
-    )
 }

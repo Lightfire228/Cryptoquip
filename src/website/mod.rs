@@ -13,10 +13,6 @@ fn select_first<'a>(el: &'a ElementRef, selector: &Selector) -> Option<ElementRe
     Some(el.select(selector).next()?.to_owned())
 }
 
-fn select_all<'a>(el: &'a ElementRef, selector: &Selector) -> Vec<ElementRef<'a>> {
-    el.select(selector).collect()
-}
-
 fn get_attr<'a>(el: &'a ElementRef, attr: &str) -> Option<String> {
     let val = el.value().attr(attr)?;
 
