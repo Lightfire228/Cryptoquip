@@ -1,6 +1,6 @@
 
 
-use chrono::{DateTime, Datelike, FixedOffset, Weekday};
+use chrono::{DateTime, Datelike, FixedOffset, Local, Weekday};
 use scraper::{selectable::Selectable, ElementRef, Html};
 
 use crate::website::get_attr;
@@ -47,6 +47,10 @@ impl ImageContext {
             url,
             date,
         })
+    }
+
+    pub fn from_cache() -> Self {
+        ImageContext { ordinal: 0, url: "".to_owned(), date: Local::now().into() }
     }
 
     pub fn is_sunday(&self) -> bool {

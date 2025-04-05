@@ -1,7 +1,7 @@
 use pdf::{backend::Backend, file::FileOptions, object::{PageRc, Resolve, XObject}};
 use scraper::Html;
 use std::{ops::Deref, vec};
-use crate::image::RawImage;
+use crate::{cache, image::RawImage};
 
 use super::{
     get_selector,
@@ -16,13 +16,29 @@ type ParseResult<T> = Result<T, ParseErrorType>;
 use ParseErrorType::*;
 
 
-pub fn download_pdf_binary(ctx: ImageContext) -> RawImage {
+pub fn download_pdf_binary(ctx: &ImageContext) -> RawImage {
 
     match (|| {
         let page      = get_image_page(&ctx);
         let pdf_url   = extract_pdf_url(&page)?;
         let pdf_bytes = get_pdf(&pdf_url);
+
+        cache::write_cache(pdf_bytes.as_slice());
+
         let image     = extract_img(pdf_bytes)?;
+
+        Ok(image)
+
+    })() {
+        Ok(x)    => x,
+        Err(err) => display_error(err)
+    }
+}
+
+pub fn from_cache(data: Vec<u8>) -> RawImage {
+
+    match (|| {
+        let image = extract_img(data)?;
 
         Ok(image)
 

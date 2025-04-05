@@ -9,8 +9,20 @@ mod website;
 mod menu;
 mod macros;
 mod image;
+mod cache;
 
 fn main() {
+    
+    if cache::check_cache() {
+        from_cache();
+    }
+    else {
+        menu();
+    }
+
+}
+
+fn menu() {
     use menu::SelectionType::*;
 
     let page   = website::get_home_page();
@@ -19,19 +31,31 @@ fn main() {
     let chosen = menu::choose_image(images);
 
     match chosen {
-        Image(ctx) => handle_selection(ctx),
+        Image(ctx) => handle_selection(&ctx),
         Quit       => return,
     }
 }
 
+fn from_cache() {
+    let data = cache::read_cache();
 
-fn handle_selection(ctx: ImageContext) {
-    let mut raw_image = website::download_pdf_binary(ctx);
+    let raw_image = website::from_cache(data);
 
-    raw_image.rectangulate();
+    handle_image(raw_image, &ImageContext::from_cache());
+}
+
+
+fn handle_selection(ctx: &ImageContext) {
+    let raw_image = website::download_pdf_binary(ctx);
+
+    handle_image(raw_image, ctx);
+
+}
+
+fn handle_image(mut raw_image: RawImage, ctx: &ImageContext) {
+    image::edit_image(&mut raw_image, ctx);
 
     dbg_write_to_png(&raw_image);
-
 }
 
 fn dbg_write_to_png(raw_image: &RawImage) {
