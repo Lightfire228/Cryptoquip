@@ -6,3 +6,4 @@ Elems
 Datelike
 Crytoquip
 rectangulate
+compactify

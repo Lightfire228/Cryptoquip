@@ -2,7 +2,7 @@ use std::convert::Infallible;
 
 use crate::{image::Point, website::ImageContext};
 
-use super::{is_black, Pixel, RawImage, Rect, Segment};
+use super::{RawImage, Rect, Segment};
 
 pub fn edit_image(img: &mut RawImage, _ctx: &ImageContext) {
     match (|| {
@@ -40,80 +40,49 @@ impl RawImage {
             }
         }
 
-        for r in rects.iter() {
-            dbg!(&r);
-            for y in r.top_left.y..r.bottom_right.y {
-                for x in r.top_left.x..r.bottom_right.x {
-
-
-                    let pix = self.get_mut(x, y);
-
-                    (*pix) = 0;
-                }
-            }
-
-        }
-
         rects
     }
 
     pub fn find_black_line_row_segments(&self) -> Vec<Segment> {
-        
-        let mut black_row_start: Option<usize> = None;
-        let mut segments = vec![];
-
-        for y in 0..self.height {
-
-            let is_black = self.is_row_black(y);
-
-            let start_black_segment =  is_black && black_row_start.is_none();
-            let start_white_segment = !is_black && black_row_start.is_some();
-
-            if start_black_segment {
-                black_row_start = Some(y);
-            }
-            else if start_white_segment {
-                segments.push(Segment::new(black_row_start.unwrap(), y));
-                black_row_start = None;
-            }
-        }
-
-        match black_row_start {
-            None    => (),
-            Some(x) => segments.push(Segment::new(x, self.height)),
-        }
-
-        segments
-
+        self.compactify(self.height, |x| self.is_row_black(x))
     }
 
     pub fn find_black_line_col_segments(&self, col_height: &Segment) -> Vec<Segment> {
+        self.compactify(self.width, |x| self.is_col_black(x, col_height))
+    }
+
+    pub fn compactify<F>(&self, max: usize, is_span_black: F) -> Vec<Segment> 
+        where F: Fn(usize) -> bool
+    {
         
-        let mut black_col_start: Option<usize> = None;
+        let mut segment_start: Option<usize> = None;
         let mut segments = vec![];
 
-        for x in 0..self.width {
+        for i in 0..max {
 
-            let is_black = self.is_col_black(x, col_height);
+            let is_black = is_span_black(i);
 
-            let start_black_segment =  is_black && black_col_start.is_none();
-            let start_white_segment = !is_black && black_col_start.is_some();
+            let start_black_segment =  is_black && segment_start.is_none();
+            let start_white_segment = !is_black && segment_start.is_some();
 
             if start_black_segment {
-                black_col_start = Some(x);
+                segment_start = Some(i);
             }
             else if start_white_segment {
-                segments.push(Segment::new(black_col_start.unwrap(), x));
-                black_col_start = None;
+                segments.push(Segment::new(segment_start.unwrap(), i));
+                segment_start = None;
             }
         }
 
-        match black_col_start {
+        match segment_start {
             None    => (),
-            Some(x) => segments.push(Segment::new(x, self.width)),
+            Some(i) => segments.push(Segment::new(i, max)),
         }
 
         segments
 
     }
+
 }
+
+
