@@ -7,9 +7,7 @@ use super::{RawImage, Segment};
 pub fn edit_image(img: &mut RawImage, _ctx: &ImageContext) {
     match (|| {
 
-        println!("made it");
-
-        // img.rectangulate();
+        img.rectangulate();
 
         Ok::<_, Infallible>(())
     })() {
@@ -26,19 +24,17 @@ impl RawImage {
     pub fn rectangulate(&mut self) {
         let segments = self.find_black_line_row_segments();
 
-        let mut black = true;
+        println!("{}", segments.len());
 
-        for s in segments {
+        for s in segments.iter() {
 
+            dbg!(s);
             for y in s.start..s.end {
                 for x in 0..self.width {
                     let pix = self.get_mut(x, y);
-
-                    *pix = if black { 0 } else { 255 };
+                    *pix = 0;
                 }
             }
-
-            black ^= true;
         }
     }
 
@@ -62,6 +58,7 @@ impl RawImage {
             }
             else if start_white_segment {
                 segments.push(Segment::new(black_row_start.unwrap(), y));
+                black_row_start = None;
             }
         }
 
