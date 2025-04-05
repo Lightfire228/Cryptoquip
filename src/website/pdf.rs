@@ -122,7 +122,7 @@ fn extract_img(bytes: Vec<u8>) -> ParseResult<RawImage> {
         let data     = img.image_data(&resolver).map_err(|_| UnableToExtractImage)?;
         let img_dict = img.deref().to_owned();
 
-        return Ok(RawImage {data: data.to_vec(), img_dict });
+        return Ok(RawImage::from_pdf(data.to_vec(), img_dict));
     }
 
     Err(NoImagesFound)
