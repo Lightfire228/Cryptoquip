@@ -28,9 +28,10 @@ fn main() {
 fn handle_selection(ctx: ImageContext) {
     let mut raw_image = website::download_pdf_binary(ctx);
 
+    raw_image.rectangulate();
+
     dbg_write_to_png(&raw_image);
 
-    raw_image.rectangulate();
 }
 
 fn dbg_write_to_png(raw_image: &RawImage) {
