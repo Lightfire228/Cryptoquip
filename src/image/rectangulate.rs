@@ -1,52 +1,39 @@
-use std::convert::Infallible;
 
-use crate::{image::Point, website::ImageContext};
-
-use super::{RawImage, Rect, Segment};
-
-pub fn edit_image(img: &mut RawImage, _ctx: &ImageContext) {
-    match (|| {
-
-        img.rectangulate();
-
-        Ok::<_, Infallible>(())
-    })() {
-        Ok(()) => {}
-    }
-}
-
-
+use super::{Point, RawImage, Rect, Segment};
 
 // Take the image processing code straight from python
 
 impl RawImage {
 
-    pub fn rectangulate(&self) -> Vec<Rect> {
+    pub fn rectangulate(&self) -> Vec<Vec<Rect>> {
 
         let mut rects = Vec::new();
-
         for row in self.find_black_line_row_segments() {
+
+            let mut row_rects = Vec::new();
             for col in self.find_black_line_col_segments(&row) {
 
-                rects.push(Rect {
+                row_rects.push(Rect {
                     top_left:     Point { x: col.start, y: row.start },
                     bottom_right: Point { x: col.end,   y: row.end   },
                 });
             }
+
+            rects.push(row_rects);
         }
 
         rects
     }
 
-    pub fn find_black_line_row_segments(&self) -> Vec<Segment> {
+    fn find_black_line_row_segments(&self) -> Vec<Segment> {
         self.compactify(self.height, |x| self.is_row_black(x))
     }
 
-    pub fn find_black_line_col_segments(&self, col_height: &Segment) -> Vec<Segment> {
+    fn find_black_line_col_segments(&self, col_height: &Segment) -> Vec<Segment> {
         self.compactify(self.width, |x| self.is_col_black(x, col_height))
     }
 
-    pub fn compactify<F>(&self, max: usize, is_span_black: F) -> Vec<Segment> 
+    fn compactify<F>(&self, max: usize, is_span_black: F) -> Vec<Segment> 
         where F: Fn(usize) -> bool
     {
         
