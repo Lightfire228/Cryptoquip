@@ -21,17 +21,12 @@ pub fn edit_image(img: &mut RawImage, _ctx: &ImageContext) {
 
 impl RawImage {
 
-    pub fn rectangulate(&mut self) -> Vec<Rect> {
+    pub fn rectangulate(&self) -> Vec<Rect> {
 
         let mut rects = Vec::new();
 
-        let row_segments = self.find_black_line_row_segments();
-
-        for row in row_segments {
-
-            let col_segments = self.find_black_line_col_segments(&row);
-
-            for col in col_segments {
+        for row in self.find_black_line_row_segments() {
+            for col in self.find_black_line_col_segments(&row) {
 
                 rects.push(Rect {
                     top_left:     Point { x: col.start, y: row.start },
