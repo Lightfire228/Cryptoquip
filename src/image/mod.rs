@@ -14,8 +14,8 @@ pub struct Point {
 
 #[derive(Debug)]
 pub struct Rect {
-    pub start: Point,
-    pub end:   Point,
+    pub top_left:     Point,
+    pub bottom_right: Point,
 }
 
 #[derive(Debug)]
@@ -55,6 +55,18 @@ impl RawImage {
         for x in 0..self.width {
 
             if is_black(self.get(x, row)) {
+                return true;
+            }
+        }
+    
+        false
+    }
+
+    pub fn is_col_black(&self, col: usize, col_height: &Segment) -> bool {
+
+        for y in col_height.start..col_height.end {
+
+            if is_black(self.get(col, y)) {
                 return true;
             }
         }
