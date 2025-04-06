@@ -65,7 +65,7 @@ impl ImageContext {
         self.date.format("%x").to_string()
     }
 
-    pub fn formatted_date(&self) -> String {
+    pub fn _formatted_date(&self) -> String {
         let day  = self.day_str();
         let date = self.date.format("%x").to_string();
         

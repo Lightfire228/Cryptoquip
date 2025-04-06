@@ -7,3 +7,4 @@ Datelike
 Crytoquip
 rectangulate
 compactify
+segmentify

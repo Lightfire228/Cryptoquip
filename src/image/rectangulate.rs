@@ -1,8 +1,6 @@
 
 use super::{Point, RawImage, Rect, Segment};
 
-// Take the image processing code straight from python
-
 impl RawImage {
 
     pub fn rectangulate(&self) -> Vec<Vec<Rect>> {
@@ -26,14 +24,14 @@ impl RawImage {
     }
 
     fn find_black_line_row_segments(&self) -> Vec<Segment> {
-        self.compactify(self.height, |x| self.is_row_black(x))
+        self.segmentify(self.height, |x| self.is_row_black(x))
     }
 
     fn find_black_line_col_segments(&self, col_height: &Segment) -> Vec<Segment> {
-        self.compactify(self.width, |x| self.is_col_black(x, col_height))
+        self.segmentify(self.width, |x| self.is_col_black(x, col_height))
     }
 
-    fn compactify<F>(&self, max: usize, is_span_black: F) -> Vec<Segment> 
+    fn segmentify<F>(&self, max: usize, is_span_black: F) -> Vec<Segment> 
         where F: Fn(usize) -> bool
     {
         

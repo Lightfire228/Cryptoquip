@@ -35,7 +35,7 @@ enum MakeRequestError {
 
 }
 
-fn _make_request(url: &str) -> Result<Response, MakeRequestError> {
+fn make_request(url: &str) -> Result<Response, MakeRequestError> {
     use MakeRequestError::*;
 
     let res = build_request(url).send()
@@ -49,10 +49,10 @@ fn _make_request(url: &str) -> Result<Response, MakeRequestError> {
     Ok(res)
 }
 
-fn _make_request_string(url: &str) -> Result<String, MakeRequestError> {
+fn make_request_string(url: &str) -> Result<String, MakeRequestError> {
     use MakeRequestError::*;
 
-    let mut res = _make_request(url)?;
+    let mut res = make_request(url)?;
 
     let mut body = String::new();
     res.read_to_string(&mut body)
@@ -62,10 +62,10 @@ fn _make_request_string(url: &str) -> Result<String, MakeRequestError> {
     Ok(body)
 }
 
-fn _make_request_bytes(url: &str) -> Result<Vec<u8>, MakeRequestError> {
+fn make_request_bytes(url: &str) -> Result<Vec<u8>, MakeRequestError> {
     use MakeRequestError::*;
 
-    let mut res = _make_request(url)?;
+    let mut res = make_request(url)?;
 
     let mut body = Vec::new();
     res.read_to_end(&mut body)
@@ -76,11 +76,11 @@ fn _make_request_bytes(url: &str) -> Result<Vec<u8>, MakeRequestError> {
 }
 
 fn get(url: &str) -> String {
-    get_as(url, &_make_request_string)
+    get_as(url, &make_request_string)
 }
 
 fn get_as_bytes(url: &str) -> Vec<u8> {
-    get_as(url, &_make_request_bytes)
+    get_as(url, &make_request_bytes)
 }
 
 fn get_as<T>(url: &str, make_request: &dyn Fn(&str) -> Result<T, MakeRequestError>) -> T {
