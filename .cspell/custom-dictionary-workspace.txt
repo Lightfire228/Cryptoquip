@@ -4,7 +4,7 @@ chrono
 reqwest
 Elems
 Datelike
-Crytoquip
+Cryptoquip
 rectangulate
 compactify
 segmentify

@@ -12,6 +12,7 @@ pub use pdf::from_cache;
 use scraper::ElementRef;
 use scraper::Selector;
 
+
 fn select_first<'a>(el: &'a ElementRef, selector: &Selector) -> Option<ElementRef<'a>> {
     Some(el.select(selector).next()?.to_owned())
 }

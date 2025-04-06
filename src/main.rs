@@ -9,6 +9,7 @@ mod website;
 mod menu;
 mod macros;
 mod image;
+mod display;
 
 #[cfg(feature = "cache")]
 mod cache;
@@ -70,6 +71,8 @@ fn handle_image(raw_image: RawImage, ctx: &ImageContext) {
     let new_image = image::edit_image(raw_image, ctx);
 
     dbg_write_to_png(&new_image);
+
+    display::display(&new_image);
 }
 
 fn dbg_write_to_png(raw_image: &RawImage) {

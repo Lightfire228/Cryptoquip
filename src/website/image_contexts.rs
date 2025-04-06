@@ -49,13 +49,6 @@ impl ImageContext {
         })
     }
 
-    #[cfg(feature = "cache")]
-    pub fn from_cache() -> Self {
-        use chrono::Local;
-        
-        ImageContext { ordinal: 0, url: "".to_owned(), date: Local::now().into() }
-    }
-
     pub fn is_sunday(&self) -> bool {
         self.date.weekday() == Weekday::Sun
     }
