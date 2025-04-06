@@ -15,13 +15,13 @@ pub enum Color {
     Black,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Point {
     pub x: usize,
     pub y: usize
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Rect {
     pub top_left:     Point,
     pub bottom_right: Point,

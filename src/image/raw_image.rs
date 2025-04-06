@@ -3,7 +3,7 @@ use pdf::object::ImageDict;
 use super::{Color, Pixel, Point, Rect, Segment};
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RawImage {
     pub data:     Vec<Pixel>,
     pub width:    usize,

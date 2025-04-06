@@ -53,9 +53,9 @@ fn handle_selection(ctx: &ImageContext) {
 }
 
 fn handle_image(mut raw_image: RawImage, ctx: &ImageContext) {
-    image::edit_image(&mut raw_image, ctx);
+    let new_image = image::edit_image(raw_image, ctx);
 
-    dbg_write_to_png(&raw_image);
+    dbg_write_to_png(&new_image);
 }
 
 fn dbg_write_to_png(raw_image: &RawImage) {

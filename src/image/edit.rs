@@ -1,5 +1,5 @@
 use crate::website::ImageContext;
-use super::{Color, RawImage, Rect};
+use super::{parsed_image::{self, ParsedImage}, Color, RawImage, Rect};
 use EditErrorType::*;
 
 type EditResult<T> = Result<T, EditErrorType>;
@@ -8,17 +8,20 @@ type Boxes = Vec<Vec<Rect>>;
 
 
 
-pub fn edit_image(img: &mut RawImage, _ctx: &ImageContext) {
+pub fn edit_image(mut img: RawImage, _ctx: &ImageContext) -> RawImage {
     match (|| {
 
         let boxes = img.rectangulate();
 
         img.hide_date(&boxes)?;
-        // img.add_padding(&mut boxes, );
+        
+        let mut parsed_image = ParsedImage::new(img, boxes);
 
-        Ok(())
+        parsed_image.test();
+
+        Ok(parsed_image.clone_raw())
     })() {
-        Ok(())   => {}
+        Ok(x)    => x,
         Err(err) => display_error(err)
     }
 }
@@ -50,9 +53,5 @@ impl RawImage {
         }
     
         Ok(())
-    }
-
-    fn add_padding(&mut self, boxes: &mut Boxes, row: usize) {
-
     }
 }
