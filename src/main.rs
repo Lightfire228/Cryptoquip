@@ -77,17 +77,21 @@ fn handle_image(raw_image: RawImage, ctx: &ImageContext) {
 
 fn dbg_write_to_png(raw_image: &RawImage) {
 
-    let path = Path::new("./out/test.png");
-    let file = File::create(path).unwrap();
+    #[cfg(feature = "cache")] {
 
-    let width  = raw_image.width  as u32;
-    let height = raw_image.height as u32;
+        let path = Path::new("./out/test.png");
+        let file = File::create(path).unwrap();
 
-    let ref mut w       = BufWriter::new(file);
-    let     mut encoder = Encoder  ::new(w, width, height);
-    encoder.set_depth(png::BitDepth::Eight);
+        let width  = raw_image.width  as u32;
+        let height = raw_image.height as u32;
 
-    let mut writer = encoder.write_header().unwrap();
+        let ref mut w       = BufWriter::new(file);
+        let     mut encoder = Encoder  ::new(w, width, height);
+        encoder.set_depth(png::BitDepth::Eight);
 
-    writer.write_image_data(&raw_image.data).unwrap();
+        let mut writer = encoder.write_header().unwrap();
+
+        writer.write_image_data(&raw_image.data).unwrap();
+    }
+
 }
