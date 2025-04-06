@@ -47,6 +47,7 @@ fn menu() {
     }
 }
 
+#[allow(dead_code)]
 fn from_cache() {
     #[cfg(feature = "cache")] {
         let data = cache::read_cache();

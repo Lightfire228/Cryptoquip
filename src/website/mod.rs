@@ -5,6 +5,8 @@ mod pdf;
 pub use request::get_home_page;
 pub use image_contexts::{get_image_contexts, ImageContext};
 pub use pdf::download_pdf_binary;
+
+#[cfg(feature = "cache")]
 pub use pdf::from_cache;
 
 use scraper::ElementRef;

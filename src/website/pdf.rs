@@ -23,6 +23,7 @@ pub fn download_pdf_binary(ctx: &ImageContext) -> RawImage {
         let pdf_url   = extract_pdf_url(&page)?;
         let pdf_bytes = get_pdf(&pdf_url);
 
+        #[cfg(feature = "cache")]
         write_cache(&pdf_bytes);
 
         let image = extract_img(pdf_bytes)?;
@@ -35,6 +36,7 @@ pub fn download_pdf_binary(ctx: &ImageContext) -> RawImage {
     }
 }
 
+#[cfg(feature = "cache")]
 pub fn from_cache(data: Vec<u8>) -> RawImage {
 
     match (|| {
@@ -85,12 +87,11 @@ fn extract_pdf_url(page: &str) -> ParseResult<String> {
     Ok(href.to_owned())
 }
 
+#[cfg(feature = "cache")]
 fn write_cache(bytes: &Vec<u8>) {
-    #[cfg(feature = "cache")] {
-        use crate::cache;
+    use crate::cache;
 
-        cache::write_cache(bytes.as_slice());
-    }
+    cache::write_cache(bytes.as_slice());
 }
 
 struct _Bytes(Vec<u8>);

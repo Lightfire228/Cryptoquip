@@ -1,6 +1,6 @@
 
 
-use chrono::{DateTime, Datelike, FixedOffset, Local, Weekday};
+use chrono::{DateTime, Datelike, FixedOffset,  Weekday};
 use scraper::{selectable::Selectable, ElementRef, Html};
 
 use crate::website::get_attr;
@@ -49,7 +49,10 @@ impl ImageContext {
         })
     }
 
+    #[cfg(feature = "cache")]
     pub fn from_cache() -> Self {
+        use chrono::Local;
+        
         ImageContext { ordinal: 0, url: "".to_owned(), date: Local::now().into() }
     }
 
