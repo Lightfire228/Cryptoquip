@@ -70,7 +70,7 @@ impl ParsedImage {
         self.image.clone()
     }
 
-    pub fn test(&mut self) {
+    pub fn _test(&mut self) {
         self.image.fill(&self.clue, Color::Black);
     }
 

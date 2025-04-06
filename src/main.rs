@@ -9,11 +9,13 @@ mod website;
 mod menu;
 mod macros;
 mod image;
+
+#[cfg(feature = "cache")]
 mod cache;
 
 fn main() {
-    
-    if cache::check_cache() {
+
+    if cache::check_cache() && cfg!(feature = "cache") {
         from_cache();
     }
     else {
@@ -52,7 +54,7 @@ fn handle_selection(ctx: &ImageContext) {
 
 }
 
-fn handle_image(mut raw_image: RawImage, ctx: &ImageContext) {
+fn handle_image(raw_image: RawImage, ctx: &ImageContext) {
     let new_image = image::edit_image(raw_image, ctx);
 
     dbg_write_to_png(&new_image);

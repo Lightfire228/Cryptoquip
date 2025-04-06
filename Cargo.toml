@@ -9,3 +9,6 @@ pdf = "0.9.0"
 png = "0.17.16"
 reqwest = { version = "0.12.15", features = ["blocking"] }
 scraper = "0.23.1"
+
+[features]
+cache = []

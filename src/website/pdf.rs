@@ -1,7 +1,7 @@
 use pdf::{backend::Backend, file::FileOptions, object::{PageRc, Resolve, XObject}};
 use scraper::Html;
 use std::{ops::Deref, vec};
-use crate::{cache, image::RawImage};
+use crate::image::RawImage;
 
 use super::{
     get_selector,
@@ -23,9 +23,9 @@ pub fn download_pdf_binary(ctx: &ImageContext) -> RawImage {
         let pdf_url   = extract_pdf_url(&page)?;
         let pdf_bytes = get_pdf(&pdf_url);
 
-        cache::write_cache(pdf_bytes.as_slice());
+        write_cache(&pdf_bytes);
 
-        let image     = extract_img(pdf_bytes)?;
+        let image = extract_img(pdf_bytes)?;
 
         Ok(image)
 
@@ -83,6 +83,14 @@ fn extract_pdf_url(page: &str) -> ParseResult<String> {
     let href     = get_attr    (&anchor,   "href")           .ok_or(HrefAttrNotFound)?;
 
     Ok(href.to_owned())
+}
+
+fn write_cache(bytes: &Vec<u8>) {
+    if cfg!(feature = "cache") {
+        use crate::cache;
+
+        cache::write_cache(bytes.as_slice());
+    }
 }
 
 struct _Bytes(Vec<u8>);

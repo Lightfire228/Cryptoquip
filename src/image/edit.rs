@@ -1,5 +1,5 @@
 use crate::website::ImageContext;
-use super::{parsed_image::{self, ParsedImage}, Color, RawImage, Rect};
+use super::{parsed_image::ParsedImage, Color, RawImage, Rect};
 use EditErrorType::*;
 
 type EditResult<T> = Result<T, EditErrorType>;
@@ -15,9 +15,8 @@ pub fn edit_image(mut img: RawImage, _ctx: &ImageContext) -> RawImage {
 
         img.hide_date(&boxes)?;
         
+        // TODO: sunday
         let mut parsed_image = ParsedImage::new(img, boxes);
-
-        parsed_image.test();
 
         Ok(parsed_image.clone_raw())
     })() {
