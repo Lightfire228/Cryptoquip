@@ -8,15 +8,14 @@ type Boxes = Vec<Vec<Rect>>;
 
 
 
-pub fn edit_image(mut img: RawImage, _ctx: &ImageContext) -> RawImage {
+pub fn edit_image(mut img: RawImage, ctx: &ImageContext) -> RawImage {
     match (|| {
 
         let boxes = img.rectangulate();
 
         img.hide_date(&boxes)?;
         
-        // TODO: sunday
-        let parsed_image = ParsedImage::new(img, boxes);
+        let parsed_image = ParsedImage::new(img, boxes, ctx);
         let dest_image   = parsed_image.new_image_from_padding();
 
         Ok(dest_image)

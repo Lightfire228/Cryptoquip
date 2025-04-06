@@ -1,6 +1,6 @@
-use crate::image::Point;
+use crate::{image::Point, website::ImageContext};
 
-use super::{iter_rect, raw_image::RawImage, Color, Rect};
+use super::{raw_image::RawImage, Rect};
 
 type Boxes = Vec<Vec<Rect>>;
 
@@ -22,12 +22,11 @@ pub struct ParsedImage {
 
     header: Rect,
     puzzle: Rect,
-    answer: Rect,
     clue:   Rect,
 }
 
 impl ParsedImage {
-    pub fn new(raw_image: RawImage, boxes: Boxes) -> Self {
+    pub fn new(raw_image: RawImage, boxes: Boxes, ctx: &ImageContext) -> Self {
 
         match (|| {
 
@@ -42,13 +41,17 @@ impl ParsedImage {
             }
 
             let first_row = boxes.first().unwrap();
-            let last_row  = boxes.last ().unwrap();
+            let clue_row  = if ctx.is_sunday() {
+                &boxes[boxes.len() -2]
+            } 
+            else {
+                boxes.last ().unwrap()
+            };
 
-            let first_row = get_rect(&raw_image, first_row);
-            let last_row  = get_rect(&raw_image, last_row);
+            let header    = raw_image.get_rect(first_row);
+            let clue_rect = raw_image.get_rect(clue_row);
 
-            let (puzzle, answer) = split_answer(
-                &raw_image,
+            let puzzle = raw_image.split_answer(
                 &boxes[1 .. &boxes.len() -1]
             )?;
 
@@ -56,10 +59,9 @@ impl ParsedImage {
             Ok(ParsedImage { 
                 image:  raw_image,
     
-                header: first_row,
+                header,
                 puzzle,
-                answer,
-                clue:   last_row,
+                clue:   clue_rect,
             })
 
         })() {
@@ -113,10 +115,6 @@ impl ParsedImage {
         target.pixels_from(source, self.clue,   y);
     }
 
-    pub fn _test(&mut self) {
-        self.image.fill(&self.clue, Color::Black);
-    }
-
 
 }
 
@@ -131,62 +129,61 @@ fn display_error(err: ImageParseError) -> ! {
     }
 }
 
+impl RawImage {
 
-fn get_rect(image: &RawImage, row: &Vec<Rect>) -> Rect {
+    fn get_rect(&self, row: &Vec<Rect>) -> Rect {
 
-    assert!(row.len() > 0);
-
-    let first_box = row.first().unwrap();
-    let last_box  = row.last() .unwrap();
-
-    let x_start = 0;
-    let x_end   = image.width;
-
-    let y_start = first_box.top_left    .y;
-    let y_end   = last_box .bottom_right.y;
-
-    Rect {
-        top_left:     Point { x: x_start, y: y_start },
-        bottom_right: Point { x: x_end,   y: y_end   },
-    }
-}
-
-fn split_answer(image: &RawImage, data: &[Vec<Rect>]) -> ImageParseResult<(Rect, Rect)> {
-
-    assert!(data.len() >= 2);
-
-    let mut answer_ind = None;
-
-    for (i, row) in data.iter().enumerate().rev() {
         assert!(row.len() > 0);
 
-        let first = row.first().unwrap();
+        let first_box = row.first().unwrap();
+        let last_box  = row.last() .unwrap();
 
-        if first.top_left.x > INDENT_THRESHOLD {
-            answer_ind = Some(i);
-            break;
+        let x_start = 0;
+        let x_end   = self.width;
+
+        let y_start = first_box.top_left    .y;
+        let y_end   = last_box .bottom_right.y;
+
+        Rect {
+            top_left:     Point { x: x_start, y: y_start },
+            bottom_right: Point { x: x_end,   y: y_end   },
         }
     }
 
-    let answer_ind = answer_ind.ok_or(IndentedRowNotFound)?;
-    
-    let get = |rows: &[Vec<Rect>]| {
-        let first = rows.first().unwrap();
-        let last  = rows.last ().unwrap();
+    fn split_answer(&self, data: &[Vec<Rect>]) -> ImageParseResult<Rect> {
 
-        let first = get_rect(image, first);
-        let last  = get_rect(image, last);
+        assert!(data.len() >= 2);
 
-        Rect {
-            top_left:     first.top_left,
-            bottom_right: last.bottom_right,
+        let mut answer_ind = None;
+
+        for (i, row) in data.iter().enumerate().rev() {
+            assert!(row.len() > 0);
+
+            let first = row.first().unwrap();
+
+            if first.top_left.x > INDENT_THRESHOLD {
+                answer_ind = Some(i);
+                break;
+            }
         }
-    };
-    
-    let (puzzle, answer) = data.split_at(answer_ind);
 
-    let puzzle = get(puzzle);
-    let answer = get(answer);
+        let answer_ind = answer_ind.ok_or(IndentedRowNotFound)?;
+        
+        let get = |rows: &[Vec<Rect>]| {
+            let first = rows.first().unwrap();
+            let last  = rows.last ().unwrap();
 
-    Ok((puzzle, answer))
+            let first = self.get_rect(first);
+            let last  = self.get_rect(last);
+
+            Rect {
+                top_left:     first.top_left,
+                bottom_right: last.bottom_right,
+            }
+        };
+        
+        let (puzzle, _) = data.split_at(answer_ind);
+
+        Ok(get(puzzle))
+    }
 }
