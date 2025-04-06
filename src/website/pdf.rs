@@ -86,7 +86,7 @@ fn extract_pdf_url(page: &str) -> ParseResult<String> {
 }
 
 fn write_cache(bytes: &Vec<u8>) {
-    if cfg!(feature = "cache") {
+    #[cfg(feature = "cache")] {
         use crate::cache;
 
         cache::write_cache(bytes.as_slice());

@@ -15,13 +15,22 @@ mod cache;
 
 fn main() {
 
-    if cache::check_cache() && cfg!(feature = "cache") {
+    if has_cache() {
         from_cache();
     }
     else {
         menu();
     }
+}
 
+fn has_cache() -> bool {
+    #[cfg(feature = "cache")] {
+        if cache::check_cache() {
+            return true;
+        }
+    }
+
+    false
 }
 
 fn menu() {
@@ -39,11 +48,13 @@ fn menu() {
 }
 
 fn from_cache() {
-    let data = cache::read_cache();
-
-    let raw_image = website::from_cache(data);
-
-    handle_image(raw_image, &ImageContext::from_cache());
+    #[cfg(feature = "cache")] {
+        let data = cache::read_cache();
+    
+        let raw_image = website::from_cache(data);
+    
+        handle_image(raw_image, &ImageContext::from_cache());
+    }
 }
 
 
