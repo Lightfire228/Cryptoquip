@@ -68,7 +68,7 @@ impl RawImage {
         }
     }
 
-    pub fn pixels_from(&mut self, source: &RawImage, rect: Rect, y_start: usize) {
+    pub fn pixels_from_relative(&mut self, source: &RawImage, rect: Rect, y_start: usize) {
 
         for point in iter_rect(&rect) {
             let x        = point.x;
@@ -77,6 +77,23 @@ impl RawImage {
 
             let source_pix = source.get    (x, y);
             let dest_pix   = self  .get_mut(x, target_y);
+
+            *dest_pix = *source_pix;
+        }
+    }
+
+    pub fn pixels_from(&mut self, source: &RawImage, rect: Rect) {
+
+        for point in iter_rect(&rect) {
+
+            let source_x = point.x - rect.top_left.x;
+            let source_y = point.y - rect.top_left.y;
+
+            let x        = point.x;
+            let y        = point.y;
+
+            let source_pix = source.get    (source_x, source_y);
+            let dest_pix   = self  .get_mut(x, y);
 
             *dest_pix = *source_pix;
         }

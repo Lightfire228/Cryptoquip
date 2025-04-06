@@ -91,13 +91,13 @@ impl ParsedImage {
 
         let mut y = 0;
 
-        target.pixels_from(source, self.header, y);
+        target.pixels_from_relative(source, self.header, y);
         y += self.header.get_height() + PUZZLE_PADDING;
 
-        target.pixels_from(source, self.puzzle, y);
+        target.pixels_from_relative(source, self.puzzle, y);
         y += self.puzzle.get_height() + CLUE_PADDING;
 
-        target.pixels_from(source, self.clue,   y);
+        target.pixels_from_relative(source, self.clue,   y);
     }
 
 

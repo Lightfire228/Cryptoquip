@@ -1,5 +1,5 @@
 use crate::website::ImageContext;
-use super::{parsed_image::ParsedImage, RawImage, Rect};
+use super::{parsed_image::ParsedImage, scale, RawImage, Rect};
 use EditErrorType::*;
 
 type EditResult<T> = Result<T, EditErrorType>;
@@ -15,8 +15,10 @@ pub fn edit_image(mut img: RawImage, ctx: &ImageContext) -> RawImage {
 
         img.hide_date(&boxes)?;
         
-        let parsed_image = ParsedImage::new(img, &boxes, ctx);
-        let dest_image   = parsed_image.new_image_from_padding();
+        let parsed_image  = ParsedImage::new(img, &boxes, ctx);
+        let cropped_image = parsed_image.new_image_from_padding();
+
+        let dest_image = scale(&cropped_image, ctx);
 
         Ok(dest_image)
     })() {

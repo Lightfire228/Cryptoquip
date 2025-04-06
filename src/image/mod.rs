@@ -2,10 +2,12 @@ mod rectangulate;
 mod edit;
 mod parsed_image;
 mod raw_image;
+mod scale;
 
 
 pub use edit::edit_image;
 pub use raw_image::RawImage;
+pub use scale::scale;
 
 type Pixel = u8;
 
