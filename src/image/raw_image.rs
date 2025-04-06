@@ -1,6 +1,6 @@
 use pdf::object::ImageDict;
 
-use super::{iter_rect, Color, Pixel, Rect, Segment};
+use super::{iter_rect, Pixel, Rect, Segment};
 
 
 #[derive(Debug, Clone)]
@@ -59,11 +59,7 @@ impl RawImage {
         false
     }
 
-    pub fn fill(&mut self, rect: &Rect, color: Color) {
-        let color = match color {
-            Color::White => 255,
-            Color::Black =>   0,
-        };
+    pub fn fill(&mut self, rect: &Rect, color: u8) {
         
         for p in iter_rect(rect) {
             let pix = self.get_mut(p.x, p.y);

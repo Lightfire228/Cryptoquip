@@ -1,5 +1,5 @@
 use crate::website::ImageContext;
-use super::{parsed_image::ParsedImage, Color, RawImage, Rect};
+use super::{parsed_image::ParsedImage, RawImage, Rect};
 use EditErrorType::*;
 
 type EditResult<T> = Result<T, EditErrorType>;
@@ -48,7 +48,7 @@ impl RawImage {
         let date_boxes = first_row.iter().filter(|b| b.top_left.x < w_quarter);
 
         for b in date_boxes {
-            self.fill(&b, Color::White);
+            self.fill(&b, 255);
         }
     
         Ok(())

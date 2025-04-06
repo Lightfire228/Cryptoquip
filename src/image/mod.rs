@@ -9,12 +9,6 @@ pub use raw_image::RawImage;
 
 type Pixel = u8;
 
-
-pub enum Color {
-    White,
-    Black,
-}
-
 #[derive(Debug, Clone, Copy)]
 pub struct Point {
     pub x: usize,
@@ -49,7 +43,7 @@ impl Rect {
         self.bottom_right.y - self.top_left.y 
     }
 
-    pub fn get_width(&self) -> usize {
+    pub fn _get_width(&self) -> usize {
         self.bottom_right.x - self.top_left.x 
     }
 }
