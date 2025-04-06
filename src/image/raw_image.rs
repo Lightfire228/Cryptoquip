@@ -1,6 +1,6 @@
 use pdf::object::ImageDict;
 
-use super::{iter_rect, Color, Pixel, Point, Rect, Segment};
+use super::{iter_rect, Color, Pixel, Rect, Segment};
 
 
 #[derive(Debug, Clone)]
@@ -16,6 +16,22 @@ impl RawImage {
             data,
             width:  img_dict.width  as usize,
             height: img_dict.height as usize,
+        }
+    }
+
+    pub fn new(width: usize, height: usize) -> Self {
+        let size = width * height;
+
+        let mut data = Vec::with_capacity(size);
+
+        for _ in 0..size {
+            data.push(255);
+        }
+
+        RawImage { 
+            data, 
+            width, 
+            height,
         }
     }
    

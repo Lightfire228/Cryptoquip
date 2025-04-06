@@ -15,7 +15,7 @@ pub fn edit_image(mut img: RawImage, ctx: &ImageContext) -> RawImage {
 
         img.hide_date(&boxes)?;
         
-        let parsed_image = ParsedImage::new(img, boxes, ctx);
+        let parsed_image = ParsedImage::new(img, &boxes, ctx);
         let dest_image   = parsed_image.new_image_from_padding();
 
         Ok(dest_image)

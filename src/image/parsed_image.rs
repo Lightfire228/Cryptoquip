@@ -26,7 +26,7 @@ pub struct ParsedImage {
 }
 
 impl ParsedImage {
-    pub fn new(raw_image: RawImage, boxes: Boxes, ctx: &ImageContext) -> Self {
+    pub fn new(raw_image: RawImage, boxes: &Boxes, ctx: &ImageContext) -> Self {
 
         match (|| {
 
@@ -40,15 +40,12 @@ impl ParsedImage {
                 }
             }
 
-            let first_row = boxes.first().unwrap();
-            let clue_row  = if ctx.is_sunday() {
-                &boxes[boxes.len() -2]
-            } 
-            else {
-                boxes.last ().unwrap()
-            };
+            let clue_ind = boxes.len() - if ctx.is_sunday() { 2 } else { 1 };
 
-            let header    = raw_image.get_rect(first_row);
+            let header_row = boxes.first().unwrap();
+            let clue_row   = &boxes[clue_ind];
+
+            let header    = raw_image.get_rect(header_row);
             let clue_rect = raw_image.get_rect(clue_row);
 
             let puzzle = raw_image.split_answer(
@@ -81,19 +78,7 @@ impl ParsedImage {
             + self.clue  .get_height()
         ;
 
-        let size = height * width;
-
-        let mut data = Vec::with_capacity(size);
-
-        for _ in 0..size {
-            data.push(255);
-        }
-
-        let mut image = RawImage { 
-            data, 
-            width, 
-            height,
-        };
+        let mut image = RawImage::new(width, height);
 
         self.copy_regions(&mut image);
 
