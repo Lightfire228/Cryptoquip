@@ -13,7 +13,8 @@ pub fn edit_image(img: &mut RawImage, _ctx: &ImageContext) {
 
         let boxes = img.rectangulate();
 
-        img.hide_date(boxes)?;
+        img.hide_date(&boxes)?;
+        // img.add_padding(&mut boxes, );
 
         Ok(())
     })() {
@@ -36,7 +37,7 @@ fn display_error(err: EditErrorType) -> ! {
 }
 
 impl RawImage {
-    fn hide_date(&mut self, boxes: Boxes) -> EditResult<()> {
+    fn hide_date(&mut self, boxes: &Boxes) -> EditResult<()> {
     
         let first_row = boxes.first().ok_or(FirstRowNotFound)?;
         
@@ -49,5 +50,9 @@ impl RawImage {
         }
     
         Ok(())
+    }
+
+    fn add_padding(&mut self, boxes: &mut Boxes, row: usize) {
+
     }
 }
