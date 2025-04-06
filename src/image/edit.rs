@@ -16,9 +16,10 @@ pub fn edit_image(mut img: RawImage, _ctx: &ImageContext) -> RawImage {
         img.hide_date(&boxes)?;
         
         // TODO: sunday
-        let mut parsed_image = ParsedImage::new(img, boxes);
+        let parsed_image = ParsedImage::new(img, boxes);
+        let dest_image   = parsed_image.new_image_from_padding();
 
-        Ok(parsed_image.clone_raw())
+        Ok(dest_image)
     })() {
         Ok(x)    => x,
         Err(err) => display_error(err)

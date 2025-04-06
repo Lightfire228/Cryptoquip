@@ -1,6 +1,6 @@
 use pdf::object::ImageDict;
 
-use super::{Color, Pixel, Point, Rect, Segment};
+use super::{iter_rect, Color, Pixel, Point, Rect, Segment};
 
 
 #[derive(Debug, Clone)]
@@ -56,16 +56,30 @@ impl RawImage {
         }
     }
 
+    pub fn pixels_from(&mut self, source: &RawImage, rect: Rect, y_start: usize) {
 
-    fn get_ind(&self, x: usize, y: usize) -> usize {
+        for point in iter_rect(&rect) {
+            let x        = point.x;
+            let y        = point.y;
+            let target_y = y_start + (point.y - rect.top_left.y);
+
+            let source_pix = source.get    (x, y);
+            let dest_pix   = self  .get_mut(x, target_y);
+
+            *dest_pix = *source_pix;
+        }
+    }
+
+
+    pub fn get_ind(&self, x: usize, y: usize) -> usize {
         (y * self.width) + x
     }
 
-    fn get(&self, x: usize, y: usize) -> &Pixel {
+    pub fn get(&self, x: usize, y: usize) -> &Pixel {
         &self.data[self.get_ind(x, y)]
     }
 
-    fn get_mut(&mut self, x: usize, y: usize) -> &mut Pixel {
+    pub fn get_mut(&mut self, x: usize, y: usize) -> &mut Pixel {
         let ind = self.get_ind(x, y);
         &mut self.data[ind]
     }
@@ -77,40 +91,3 @@ fn is_black(pix: &Pixel) -> bool {
     *pix < 255
 }
 
-
-struct RectIter<'a> {
-    rect: &'a Rect,
-
-    x: usize,
-    y: usize,
-}
-
-impl<'a> Iterator for RectIter<'a> {
-    type Item = Point;
-
-    fn next(&mut self) -> Option<Self::Item> {
-
-        if self.x >= self.rect.bottom_right.x {
-            self.x  = self.rect.top_left.x;
-            self.y += 1
-        }
-
-        if self.y >= self.rect.bottom_right.y {
-            return None;
-        }
-
-        let (x, y) = (self.x, self.y);
-
-
-        self.x += 1;
-        Some(Point { x, y, })
-    }
-}
-
-fn iter_rect<'a>(rect: &'a Rect) -> RectIter<'a> {
-    RectIter { 
-        rect,
-        x: rect.top_left.x, 
-        y: rect.top_left.y,
-    }
-}

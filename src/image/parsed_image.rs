@@ -1,6 +1,6 @@
 use crate::image::Point;
 
-use super::{raw_image::RawImage, Color, Rect};
+use super::{iter_rect, raw_image::RawImage, Color, Rect};
 
 type Boxes = Vec<Vec<Rect>>;
 
@@ -14,9 +14,11 @@ use ImageParseError::*;
 type ImageParseResult<T> = Result<T, ImageParseError>;
 
 static INDENT_THRESHOLD: usize = 10;
+static PUZZLE_PADDING:   usize = 75;
+static CLUE_PADDING:     usize = 50;
 
 pub struct ParsedImage {
-    image:  RawImage,
+    pub image:  RawImage,
 
     header: Rect,
     puzzle: Rect,
@@ -66,8 +68,49 @@ impl ParsedImage {
         }
     }
 
-    pub fn clone_raw(&self) -> RawImage {
-        self.image.clone()
+    pub fn new_image_from_padding(&self) -> RawImage {
+        let width  = self.image.width;
+
+        let height = 0
+            + self.header.get_height()
+            + PUZZLE_PADDING
+            + self.puzzle.get_height()
+            + CLUE_PADDING
+            + self.clue  .get_height()
+        ;
+
+        let size = height * width;
+
+        let mut data = Vec::with_capacity(size);
+
+        for _ in 0..size {
+            data.push(255);
+        }
+
+        let mut image = RawImage { 
+            data, 
+            width, 
+            height,
+        };
+
+        self.copy_regions(&mut image);
+
+        image
+
+    }
+
+    fn copy_regions(&self, target: &mut RawImage) {
+        let source = &self.image;
+
+        let mut y = 0;
+
+        target.pixels_from(source, self.header, y);
+        y += self.header.get_height() + PUZZLE_PADDING;
+
+        target.pixels_from(source, self.puzzle, y);
+        y += self.puzzle.get_height() + CLUE_PADDING;
+
+        target.pixels_from(source, self.clue,   y);
     }
 
     pub fn _test(&mut self) {
