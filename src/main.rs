@@ -1,7 +1,5 @@
-use std::{fs::File, io::BufWriter, path::Path};
 
 use image::RawImage;
-use png::Encoder;
 use website::ImageContext;
 
 
@@ -75,15 +73,18 @@ fn handle_image(raw_image: RawImage, ctx: &ImageContext) {
     display::display(&new_image);
 }
 
-fn dbg_write_to_png(raw_image: &RawImage) {
+fn dbg_write_to_png(_raw_image: &RawImage) {
 
     #[cfg(feature = "cache")] {
+
+        use std::{fs::File, io::BufWriter, path::Path};
+        use png::Encoder;
 
         let path = Path::new("./out/test.png");
         let file = File::create(path).unwrap();
 
-        let width  = raw_image.width  as u32;
-        let height = raw_image.height as u32;
+        let width  = _raw_image.width  as u32;
+        let height = _raw_image.height as u32;
 
         let ref mut w       = BufWriter::new(file);
         let     mut encoder = Encoder  ::new(w, width, height);
@@ -91,7 +92,7 @@ fn dbg_write_to_png(raw_image: &RawImage) {
 
         let mut writer = encoder.write_header().unwrap();
 
-        writer.write_image_data(&raw_image.data).unwrap();
+        writer.write_image_data(&_raw_image.data).unwrap();
     }
 
 }

@@ -12,7 +12,7 @@ pub fn display(image: &RawImage) {
         let file = get_file_name();
         write_file(image, &file)?;
 
-        display_platform(&file);
+        display_platform(&file)?;
 
         Ok(())
     })() {
@@ -67,13 +67,15 @@ fn get_file_name() -> PathBuf {
     temp_dir.join(filename)
 }
 
-fn display_platform(path: &Path) {
+fn display_platform(path: &Path) -> DisplayResult<()> {
     if cfg!(target_os = "windows") {
-        display_windows(path);
+        display_windows(path)?;
     }
     else {
-        display_linux(path);
+        display_linux(path)?;
     }
+
+    Ok(())
 }
 
 fn display_windows(path: &Path) -> DisplayResult<()> {
