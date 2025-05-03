@@ -6,14 +6,12 @@ type EditResult<T> = Result<T, EditErrorType>;
 type Boxes = Vec<Vec<Rect>>;
 
 
-
-
-pub fn edit_image(mut img: RawImage, ctx: &ImageContext) -> RawImage {
+pub fn edit_image(img: RawImage, ctx: &ImageContext) -> RawImage {
     match (|| {
 
         let boxes = img.rectangulate();
 
-        img.hide_date(&boxes)?;
+        // img.hide_date(&boxes)?;
         
         let parsed_image  = ParsedImage::new(img, &boxes, ctx);
         let cropped_image = parsed_image.new_image_from_padding();
@@ -27,7 +25,6 @@ pub fn edit_image(mut img: RawImage, ctx: &ImageContext) -> RawImage {
     }
 }
 
-
 enum EditErrorType {
     FirstRowNotFound,
 }
@@ -40,6 +37,7 @@ fn display_error(err: EditErrorType) -> ! {
     }
 }
 
+#[allow(dead_code)]
 impl RawImage {
     fn hide_date(&mut self, boxes: &Boxes) -> EditResult<()> {
     
