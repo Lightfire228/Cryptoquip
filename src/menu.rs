@@ -5,6 +5,8 @@ use crate::{multi_line, website::ImageContext};
 type BiMenu<'a>          = (Vec<&'a MenuOption>, Vec<&'a MenuOption>);
 type MenuResult<T>       = Result<T,     MenuErrorType>; 
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub fn choose_image(images: Vec<ImageContext>) -> SelectionType {
     use MenuErrorType::*;
 
@@ -214,10 +216,13 @@ fn get_stdin() -> MenuResult<String> {
 
 fn display_menu(bi_menu: &BiMenu) {
 
+    let ver = format!(" - version {}", VERSION);
+
     println!("{}", multi_line!(
         "Which Crytoquip to download?",
         " - press Enter to download the most recent",
         " - press q to Quit",
+        &ver,
         "",
     ));
 
